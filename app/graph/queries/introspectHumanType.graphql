@@ -1,0 +1,6 @@
+query introspectHumanType {
+  __type(name: "Human") {
+    name,
+    fields { name, type }
+  }
+}
