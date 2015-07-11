@@ -39,7 +39,7 @@ window.Client = React.createClass({
             />*/}
             <h3>See More</h3>
             <ul className="unstyled">
-              <li>> <a href='http://github.com/rmosolgo/graphql-ruby' target='_blank'>schema defintion</a></li>
+              <li>> <a href='https://github.com/rmosolgo/graphql-ruby-demo/tree/master/app/graph' target='_blank'>schema defintion</a></li>
               <li>> <a href='http://github.com/rmosolgo/graphql-ruby' target='_blank'>graphql-ruby</a></li>
               <li>> <a href='http://facebook.github.io/graphql' target='_blank'>GraphQL spec</a></li>
             </ul>
