@@ -1,6 +1,12 @@
 query introspectHumanType {
   __type(name: "Human") {
     name,
-    fields { name, type }
+    fields {
+      name,
+      type {
+        name,
+        ofType { name }
+      }
+    }
   }
 }
