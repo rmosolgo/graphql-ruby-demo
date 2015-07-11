@@ -1,8 +1,10 @@
 source 'https://rubygems.org'
 
+ruby '2.2.2'
 gem 'graphql', '0.1.0'
 gem 'skyblue_rails'
 gem 'react-rails'
+gem 'rails_12factor'
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
 gem 'rails', '4.2.2'
 # Use postgresql as the database for Active Record
