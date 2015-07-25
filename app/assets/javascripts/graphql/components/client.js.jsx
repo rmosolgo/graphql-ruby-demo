@@ -52,7 +52,7 @@ window.Client = React.createClass({
           <div className='col md-5'>
             <select
               defaultValue={null}
-              onChange={this.handleQueryChange}
+              onChange={this.handleQuerySelect}
               className='form-control'
             >
               {this._getQueryOptionGroups()}
@@ -62,11 +62,17 @@ window.Client = React.createClass({
       </div>
     )
   },
+
   handleQueryChange: function(ev) {
+    this.setState({query: ev.target.value})
+  },
+
+  handleQuerySelect: function(ev) {
     this.setState({query: ev.target.value}, function() {
       this.handleSubmit()
     })
   },
+
   handleQueryClick: function(queryString) {
     this.setState({query: queryString})
   },
