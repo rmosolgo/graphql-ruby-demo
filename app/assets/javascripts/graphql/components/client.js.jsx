@@ -63,7 +63,9 @@ window.Client = React.createClass({
     )
   },
   handleQueryChange: function(ev) {
-    this.setState({query: ev.target.value})
+    this.setState({query: ev.target.value}, function() {
+      this.handleSubmit()
+    })
   },
   handleQueryClick: function(queryString) {
     this.setState({query: queryString})

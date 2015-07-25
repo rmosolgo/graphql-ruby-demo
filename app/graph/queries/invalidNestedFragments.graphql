@@ -1,0 +1,10 @@
+query infiniteFragments {
+  hero {
+    ... heroFields
+  }
+}
+
+fragment heroFields on Character {
+  id,
+  ... heroFields
+}

@@ -1,15 +1,20 @@
 class QuerySet
   def initialize
     @queries = {
-      "Read Data" => {
-        "readHero" => read_query("readHero"),
-        "readLukesFriends" => read_query("readLukesFriends"),
-        "readSiblings" => read_query("readSiblings"),
-      },
-      "Introspection" => {
-        "introspectHumanType" => read_query("introspectHumanType"),
-        "introspectSchema" => read_query("introspectSchema"),
-      },
+      "Read Data" => create_map(
+        "readHero",
+        "readHeroByEpisode",
+        "readLukesFriends",
+        "readSiblings",
+      ),
+      "Introspection" => create_map(
+        "introspectHumanType",
+        "introspectSchema",
+      ),
+      "Invalid Queries" => create_map(
+        "invalidFields",
+        "invalidNestedFragments"
+      ),
     }
   end
 
@@ -22,5 +27,11 @@ class QuerySet
   def read_query(name)
     file = Rails.root.join("app", "graph", "queries", "#{name}.graphql")
     File.read(file)
+  end
+
+  def create_map(*names)
+    names.each_with_object({}) do |name, memo|
+      memo[name] = read_query(name)
+    end
   end
 end

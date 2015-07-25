@@ -8,9 +8,7 @@ module Character
   extend ActiveSupport::Concern
   included do
     serialize :appears_in, JSON
-    def appears_in_names
-      appears_in.map {|i| EPISODES[i] }
-    end
+
     def friends
       Friendship.where(from_character_id: id).map(&:to_character)
     end

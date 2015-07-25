@@ -1,0 +1,5 @@
+query readHero {
+  newHopeHero:  hero(episode: NEWHOPE) { name, id }
+  empireHero:   hero(episode: EMPIRE) { name, id }
+  jediHero:     hero(episode: JEDI) { name, id }
+}

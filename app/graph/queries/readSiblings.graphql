@@ -1,6 +1,10 @@
 query readLukesFriends {
-  brother: human(id: 1000) { ... siblingFields }
-  sister:  human(id: 1003) { ... siblingFields }
+  brother: human(id: 1000) {
+    ... siblingFields
+  }
+  sister:  human(id: 1003) {
+    ... siblingFields
+  }
 }
 
 fragment siblingFields on Human {

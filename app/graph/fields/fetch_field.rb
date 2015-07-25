@@ -1,23 +1,14 @@
-class FetchField
-  # name will be assigned when this field is
-  # attached to something
-  attr_accessor :name
-  attr_reader :type, :description, :arguments, :deprecation_reason
-
+class FetchField < GraphQL::Field
   def initialize(model:, type:)
+    self.type = type
     @model = model
-    @type = type
-    @description = "Find a #{@model.name} by ID"
-    @arguments = {id: {type: !GraphQL::INT_TYPE} }
-    @deprecation_reason = nil
+    self.description = "Find a #{model.name} by ID"
+    self.arguments = {
+      id: GraphQL::InputValue.new(type: !GraphQL::INT_TYPE, description: "Id for record", default_value: nil)
+    }
   end
 
-  # Called during query execution
-  def resolve(object, arguments, context)
+  def resolve(object, arguments, ctx)
     @model.find(arguments["id"])
-  end
-
-  def deprecated?
-    !!deprecation_reason
   end
 end
