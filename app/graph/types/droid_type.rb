@@ -5,15 +5,14 @@
 #   appearsIn: [Episode]
 #   primaryFunction: String
 # }
-DroidType = GraphQL::ObjectType.new do |t, type, field|
-  t.name "Droid"
-  t.description "A robotic character in Star Wars"
-  t.fields({
-    id:               field.build(type: !type.Int, desc: "The unique ID of this droid"),
-    name:             field.build(type: !type.String, desc: "The name of this droid"),
-    friends:          field.build(type: type[CharacterInterface], desc: "Friends of this droid"),
-    appearsIn:        field.build(type: type[EpisodeEnum], desc: "Episodes this droid appears in"),
-    primaryFunction:  field.build(type: type.String, property: :primary_function, desc: "What this droid is for"),
-  })
-  t.interfaces [CharacterInterface]
+DroidType = GraphQL::ObjectType.define do
+  name "Droid"
+  description "A robotic character in Star Wars"
+  interfaces [CharacterInterface]
+
+  field :id, !types.Int, "The unique ID of this droid"
+  field :name, !types.String, "The name of this droid"
+  field :friends, types[CharacterInterface], "Friends of this droid"
+  field :appearsIn, types[EpisodeEnum], "Episodes this droid appears in"
+  field :primaryFunction,  types.String, "What this droid is for", property: :primary_function
 end

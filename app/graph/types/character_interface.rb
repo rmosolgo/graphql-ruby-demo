@@ -4,13 +4,11 @@
 #   friends: [Character]
 #   appearsIn: [Episode]
 # }
-CharacterInterface = GraphQL::InterfaceType.new do |i, type, field|
-  i.name "Character"
-  i.description "A sentient actor in Star Wars"
-  i.fields({
-    id:         field.build(type: !type.Int, desc: "The unique ID of this person"),
-    name:       field.build(type: !type.String, desc: "The name of this person"),
-    friends:    field.build(type: type[i], desc: "Friends of this person"),
-    appearsIn:  field.build(type: type[EpisodeEnum], property: :appears_in_names, desc: "Episodes this person appears in"),
-  })
+CharacterInterface = GraphQL::InterfaceType.define do
+  name "Character"
+  description "A sentient actor in Star Wars"
+  field :id,        !types.Int, "The unique ID of this person"
+  field :name,      !types.String, "The name of this person"
+  field :friends,   -> { types[CharacterInterface] }, "Friends of this person"
+  field :appearsIn, types[EpisodeEnum], "Episodes this person appears in", property: :appears_in_names
 end
