@@ -1,5 +1,5 @@
 # enum Episode { NEWHOPE, EMPIRE, JEDI }
-EpisodeEnum = GraphQL::Enum.new do |e|
+EpisodeEnum = GraphQL::EnumType.new do |e|
   e.name "Episode"
   e.description "An part of the Star Wars saga"
   e.value("NEWHOPE",  "Part 4", value: 4)

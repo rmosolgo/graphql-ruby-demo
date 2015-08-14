@@ -4,7 +4,7 @@
 #   friends: [Character]
 #   appearsIn: [Episode]
 # }
-CharacterInterface = GraphQL::Interface.new do |i, type, field|
+CharacterInterface = GraphQL::InterfaceType.new do |i, type, field|
   i.name "Character"
   i.description "A sentient actor in Star Wars"
   i.fields({
