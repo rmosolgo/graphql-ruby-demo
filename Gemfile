@@ -1,9 +1,7 @@
 source 'https://rubygems.org'
 
 ruby '2.2.2'
-gem 'graphql',
-  '0.3.0'
-  # path: "~/projects/graphql"
+gem 'graphql', '0.5.0'
 gem 'skyblue_rails'
 gem 'react-rails'
 gem 'rails_12factor', group: :production
