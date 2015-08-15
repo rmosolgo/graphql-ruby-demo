@@ -10,7 +10,7 @@ class QuerySet
       "Introspection" => create_map(
         "introspectHumanType",
         "introspectSchema",
-      ),
+      ).merge({"full introspectionQuery" => GraphQL::Introspection::INTROSPECTION_QUERY}),
       "Invalid Queries" => create_map(
         "invalidFields",
         "invalidNestedFragments"
