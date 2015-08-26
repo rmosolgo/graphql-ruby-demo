@@ -22,6 +22,10 @@ class QuerySet
     @queries
   end
 
+  def hero_by_episode
+    @queries["Read Data"]["readHeroByEpisode"]
+  end
+
   private
 
   def read_query(name)

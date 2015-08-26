@@ -4,7 +4,10 @@ class FetchField < GraphQL::Field
     @model = model
     self.description = "Find a #{model.name} by ID"
     self.arguments = {
-      id: GraphQL::Argument.new(type: !GraphQL::INT_TYPE, description: "Id for record", default_value: nil)
+      id: GraphQL::Argument.define do
+        type !GraphQL::INT_TYPE
+        description "Id for record"
+      end
     }
   end
 

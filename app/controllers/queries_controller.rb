@@ -4,8 +4,8 @@ class QueriesController < ApplicationController
 
   def create
     query_string = params[:query]
-    query_params = params[:params] || {}
-    query = GraphQL::Query.new(StarWarsSchema, query_string, params: params)
+    query_variables = params[:variables] || {}
+    query = GraphQL::Query.new(StarWarsSchema, query_string, variables: query_variables)
     render json: query.result
   end
 end

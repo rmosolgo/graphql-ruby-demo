@@ -1,1 +1,1 @@
-StarWarsSchema = GraphQL::Schema.new(query: QueryType, mutation: nil)
+StarWarsSchema = GraphQL::Schema.new(query: QueryType )

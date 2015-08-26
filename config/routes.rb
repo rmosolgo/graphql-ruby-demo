@@ -1,5 +1,6 @@
 Rails.application.routes.draw do
-  root to: redirect("queries/new")
+  root to: redirect("graphiql")
   resources :queries
   resource :sha, only: :show
+  get "graphiql", to: "pages#graphiql"
 end
