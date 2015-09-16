@@ -2,6 +2,7 @@ class QuerySet
   def initialize
     @queries = {
       "Read Data" => create_map(
+        "introQuery",
         "readHero",
         "readHeroByEpisode",
         "readLukesFriends",
@@ -22,8 +23,8 @@ class QuerySet
     @queries
   end
 
-  def hero_by_episode
-    @queries["Read Data"]["readHeroByEpisode"]
+  def intro_query
+    @queries["Read Data"]["introQuery"]
   end
 
   private

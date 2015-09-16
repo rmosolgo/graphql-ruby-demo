@@ -77,7 +77,7 @@
       React.render(
         React.createElement(GraphiQL, {
           fetcher: graphQLFetcher,
-          query: parameters.query || "<%= QuerySet.new.hero_by_episode.gsub("\n","\\n").html_safe %>",
+          query: parameters.query || "<%= QuerySet.new.intro_query.gsub("\n","\\n").html_safe %>",
           variables: parameters.variables,
           onEditQuery: onEditQuery,
           onEditVariables: onEditVariables

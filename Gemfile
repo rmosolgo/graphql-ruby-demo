@@ -1,9 +1,10 @@
 source 'https://rubygems.org'
 
 ruby '2.2.2'
-gem 'graphql', '~> 0.6'
-gem 'graphql-relay', '0.3.5'
-gem 'skyblue_rails'
+
+gem 'graphql', '~> 0.9'
+gem 'graphql-relay', '~>0.4'
+
 gem 'react-rails'
 gem 'rails_12factor', group: :production
 gem 'rails', '4.2.3'

@@ -1,0 +1,20 @@
+query readHero {
+  newHopeHero:  hero(episode: NEWHOPE)  {
+    ... heroFields
+  }
+  empireHero:   hero(episode: EMPIRE)   {
+    ... heroFields
+  }
+}
+
+fragment heroFields on Character {
+  name,
+  id,
+  friends(first: 1) {
+    edges {
+      node {
+        name
+      }
+    }
+  }
+}
