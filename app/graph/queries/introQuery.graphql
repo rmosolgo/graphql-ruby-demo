@@ -1,16 +1,36 @@
-query readHero {
-  newHopeHero:  hero(episode: NEWHOPE)  {
-    ... heroFields
+# Use GraphQL to query data from
+# a Ruby on Rails backend
+
+query heroes {
+  # Find the hero for this episode
+  hero(episode: NEWHOPE)  {
+    # And get some information
+	  id,
+    name,
+    __typename
+    # if it's a droid, you can
+    # access this field
+		... on Droid {
+      primaryFunction
+    }
   }
-  empireHero:   hero(episode: EMPIRE)   {
-    ... heroFields
+
+  # Find a node by its global ID
+  node(id: "SHVtYW4tMTAwMA==") {
+    id,
+    ... on Character {
+      # Use a predefined set of fields
+      # (called a fragment)
+      ...heroFields
+    }
   }
 }
 
 fragment heroFields on Character {
   name,
   id,
-  friends(first: 1) {
+
+  friends(first: 2) {
     edges {
       node {
         name
