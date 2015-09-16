@@ -59,7 +59,7 @@ GEM
     execjs (2.5.2)
     globalid (0.3.6)
       activesupport (>= 4.1.0)
-    graphql (0.9.2)
+    graphql (0.9.3)
       parslet (~> 1.6)
     graphql-relay (0.4.2)
       graphql (~> 0.8)
