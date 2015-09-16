@@ -3,7 +3,6 @@
  *= require ./solarized-theme
  *= require_self
 */
-@import 'skyblue';
 
 .explorer__header {
   background-color: #333;
@@ -27,4 +26,3 @@
   &:after {
     clear: both; }
 }
-

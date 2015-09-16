@@ -8,5 +8,4 @@
 //= require_tree ./graphql/components
 //= require ./graphql/query_store
 //= require_self
-//= require skyblue/ie
 QueryStore.start()
