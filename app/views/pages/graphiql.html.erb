@@ -73,11 +73,12 @@
         });
       }
 
+      var defaultQuery = "<%= QuerySet.new.intro_query.gsub("\n","\\n").gsub('"', '\"').html_safe %>";
       // Render <GraphiQL /> into the body.
       React.render(
         React.createElement(GraphiQL, {
           fetcher: graphQLFetcher,
-          query: parameters.query || "<%= QuerySet.new.intro_query.gsub("\n","\\n").html_safe %>",
+          query: parameters.query || defaultQuery,
           variables: parameters.variables,
           onEditQuery: onEditQuery,
           onEditVariables: onEditVariables
