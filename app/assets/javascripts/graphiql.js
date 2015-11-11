@@ -41,7 +41,7 @@ function getLocation(source, position) {
   }
   return _codemirror2['default'].Pos(line, column);
 }
-},{"./jsonLint":2,"codemirror":117}],2:[function(require,module,exports){
+},{"./jsonLint":2,"codemirror":116}],2:[function(require,module,exports){
 /**
  *  Copyright (c) 2015, Facebook, Inc.
  *  All rights reserved.
@@ -310,6 +310,570 @@ function readDigits() {
  *  LICENSE-examples file in the root directory of this source tree.
  */
 
+'use strict';
+
+exports.__esModule = true;
+
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var _react = (typeof window !== "undefined" ? window['React'] : typeof global !== "undefined" ? global['React'] : null);
+
+var _react2 = _interopRequireDefault(_react);
+
+var _marked = require('marked');
+
+var _marked2 = _interopRequireDefault(_marked);
+
+var _graphqlType = require('graphql/type');
+
+/**
+ * DocExplorer
+ *
+ * Shows documentations for GraphQL definitions from the schema.
+ *
+ * Props:
+ *
+ *   - schema: A required GraphQLSchema instance that provides GraphQL document
+ *     definitions.
+ *
+ * Children:
+ *
+ *   - Any provided children will be positioned in the right-hand-side of the
+ *     top bar. Typically this will be a "close" button for temporary explorer.
+ *
+ */
+
+var DocExplorer = (function (_React$Component) {
+  _inherits(DocExplorer, _React$Component);
+
+  // Public API
+
+  DocExplorer.prototype.showDoc = function showDoc(typeOrField) {
+    var navStack = this.state.navStack;
+    var isCurrentlyShown = navStack.length > 0 && navStack[navStack.length - 1] === typeOrField;
+    if (!isCurrentlyShown) {
+      navStack = navStack.concat([typeOrField]);
+    }
+    this.setState({ navStack: navStack });
+  };
+
+  _createClass(DocExplorer, null, [{
+    key: 'propTypes',
+    value: {
+      schema: _react.PropTypes.instanceOf(_graphqlType.GraphQLSchema)
+    },
+    enumerable: true
+  }]);
+
+  function DocExplorer() {
+    var _this = this;
+
+    _classCallCheck(this, DocExplorer);
+
+    _React$Component.call(this);
+
+    this._onToggleBtnClick = function () {
+      _this.setState({ expanded: !_this.state.expanded });
+    };
+
+    this._onNavBackClick = function () {
+      _this.setState({ navStack: _this.state.navStack.slice(0, -1) });
+    };
+
+    this._onClickTypeOrField = function (typeOrField) {
+      _this.showDoc(typeOrField);
+    };
+
+    this.state = { navStack: [] };
+  }
+
+  // Render the top level Schema
+
+  DocExplorer.prototype.shouldComponentUpdate = function shouldComponentUpdate(nextProps, nextState) {
+    return this.props.schema !== nextProps.schema || this.state.navStack !== nextState.navStack;
+  };
+
+  DocExplorer.prototype.render = function render() {
+    var schema = this.props.schema;
+    var navStack = this.state.navStack;
+
+    var typeOrField;
+    if (navStack.length > 0) {
+      typeOrField = navStack[navStack.length - 1];
+    }
+
+    var title;
+    var content;
+    if (typeOrField) {
+      title = typeOrField.name;
+      content = _graphqlType.isType(typeOrField) ? _react2['default'].createElement(TypeDoc, {
+        key: typeOrField.name,
+        type: typeOrField,
+        onClickType: this._onClickTypeOrField,
+        onClickField: this._onClickTypeOrField
+      }) : _react2['default'].createElement(FieldDoc, {
+        key: typeOrField.name,
+        field: typeOrField,
+        onClickType: this._onClickTypeOrField
+      });
+    } else if (schema) {
+      title = 'Documentation Explorer';
+      content = _react2['default'].createElement(SchemaDoc, {
+        schema: schema,
+        onClickType: this._onClickTypeOrField
+      });
+    }
+
+    var prevName;
+    if (navStack.length === 1) {
+      prevName = 'Schema';
+    } else if (navStack.length > 1) {
+      prevName = navStack[navStack.length - 2].name;
+    }
+
+    return _react2['default'].createElement(
+      'div',
+      { className: 'doc-explorer' },
+      _react2['default'].createElement(
+        'div',
+        { className: 'doc-explorer-title-bar' },
+        prevName && _react2['default'].createElement(
+          'div',
+          { className: 'doc-explorer-back', onClick: this._onNavBackClick },
+          prevName
+        ),
+        _react2['default'].createElement(
+          'div',
+          { className: 'doc-explorer-title' },
+          title
+        ),
+        _react2['default'].createElement(
+          'div',
+          { className: 'doc-explorer-rhs' },
+          this.props.children
+        )
+      ),
+      _react2['default'].createElement(
+        'div',
+        { className: 'doc-explorer-contents' },
+        content
+      )
+    );
+  };
+
+  return DocExplorer;
+})(_react2['default'].Component);
+
+exports.DocExplorer = DocExplorer;
+
+var SchemaDoc = (function (_React$Component2) {
+  _inherits(SchemaDoc, _React$Component2);
+
+  function SchemaDoc() {
+    _classCallCheck(this, SchemaDoc);
+
+    _React$Component2.apply(this, arguments);
+  }
+
+  // Documentation for a Type
+
+  SchemaDoc.prototype.shouldComponentUpdate = function shouldComponentUpdate(nextProps) {
+    return this.props.schema !== nextProps.schema;
+  };
+
+  SchemaDoc.prototype.render = function render() {
+    var schema = this.props.schema;
+    var queryType = schema.getQueryType();
+    var mutationType = schema.getMutationType();
+    var subscriptionType = schema.getSubscriptionType();
+
+    return _react2['default'].createElement(
+      'div',
+      null,
+      _react2['default'].createElement(Description, {
+        className: 'doc-type-description',
+        markdown: 'A GraphQL schema provides a root type for each kind of operation.'
+      }),
+      _react2['default'].createElement(
+        'div',
+        { className: 'doc-category' },
+        _react2['default'].createElement(
+          'div',
+          { className: 'doc-category-title' },
+          'root types'
+        ),
+        _react2['default'].createElement(
+          'div',
+          { className: 'doc-category-item' },
+          _react2['default'].createElement(
+            'span',
+            { className: 'keyword' },
+            'query'
+          ),
+          ': ',
+          _react2['default'].createElement(TypeLink, { type: queryType, onClick: this.props.onClickType })
+        ),
+        mutationType && _react2['default'].createElement(
+          'div',
+          { className: 'doc-category-item' },
+          _react2['default'].createElement(
+            'span',
+            { className: 'keyword' },
+            'mutation'
+          ),
+          ': ',
+          _react2['default'].createElement(TypeLink, { type: mutationType, onClick: this.props.onClickType })
+        ),
+        subscriptionType && _react2['default'].createElement(
+          'div',
+          { className: 'doc-category-item' },
+          _react2['default'].createElement(
+            'span',
+            { className: 'keyword' },
+            'subscription'
+          ),
+          ': ',
+          _react2['default'].createElement(TypeLink, {
+            type: subscriptionType,
+            onClick: this.props.onClickType
+          })
+        )
+      )
+    );
+  };
+
+  return SchemaDoc;
+})(_react2['default'].Component);
+
+var TypeDoc = (function (_React$Component3) {
+  _inherits(TypeDoc, _React$Component3);
+
+  function TypeDoc() {
+    _classCallCheck(this, TypeDoc);
+
+    _React$Component3.apply(this, arguments);
+  }
+
+  // Documentation for a field
+
+  TypeDoc.prototype.shouldComponentUpdate = function shouldComponentUpdate(nextProps) {
+    return this.props.type !== nextProps.type;
+  };
+
+  TypeDoc.prototype.render = function render() {
+    var type = this.props.type;
+    var onClickType = this.props.onClickType || function () {};
+    var onClickField = this.props.onClickField || function () {};
+
+    var typesTitle;
+    var types;
+    if (type instanceof _graphqlType.GraphQLUnionType) {
+      typesTitle = 'possible types';
+      types = type.getPossibleTypes();
+    } else if (type instanceof _graphqlType.GraphQLInterfaceType) {
+      typesTitle = 'implementations';
+      types = type.getPossibleTypes();
+    } else if (type instanceof _graphqlType.GraphQLObjectType) {
+      typesTitle = 'implements';
+      types = type.getInterfaces();
+    }
+
+    var typesDef;
+    if (types && types.length > 0) {
+      typesDef = _react2['default'].createElement(
+        'div',
+        { className: 'doc-category' },
+        _react2['default'].createElement(
+          'div',
+          { className: 'doc-category-title' },
+          typesTitle
+        ),
+        types.map(function (subtype) {
+          return _react2['default'].createElement(
+            'div',
+            { key: subtype.name, className: 'doc-category-item' },
+            _react2['default'].createElement(TypeLink, { type: subtype, onClick: onClickType })
+          );
+        })
+      );
+    }
+
+    // InputObject and Object
+    var fieldsDef;
+    if (type.getFields) {
+      var fieldMap = type.getFields();
+      var fields = Object.keys(fieldMap).map(function (name) {
+        return fieldMap[name];
+      });
+      fieldsDef = _react2['default'].createElement(
+        'div',
+        { className: 'doc-category' },
+        _react2['default'].createElement(
+          'div',
+          { className: 'doc-category-title' },
+          'fields'
+        ),
+        fields.map(function (field) {
+
+          // Field arguments
+          var argsDef;
+          if (field.args && field.args.length > 0) {
+            argsDef = field.args.map(function (arg) {
+              return _react2['default'].createElement(
+                'span',
+                { className: 'arg', key: arg.name },
+                _react2['default'].createElement(
+                  'span',
+                  { className: 'arg-name' },
+                  arg.name
+                ),
+                ': ',
+                _react2['default'].createElement(TypeLink, { type: arg.type, onClick: onClickType })
+              );
+            });
+          }
+
+          return _react2['default'].createElement(
+            'div',
+            { key: field.name, className: 'doc-category-item' },
+            _react2['default'].createElement(
+              'a',
+              {
+                className: 'field-name',
+                onClick: function (event) {
+                  return onClickField(field, type, event);
+                } },
+              field.name
+            ),
+            argsDef && ['(', _react2['default'].createElement(
+              'span',
+              null,
+              argsDef
+            ), ')'],
+            ': ',
+            _react2['default'].createElement(TypeLink, { type: field.type, onClick: onClickType })
+          );
+        })
+      );
+    }
+
+    var valuesDef;
+    if (type instanceof _graphqlType.GraphQLEnumType) {
+      valuesDef = _react2['default'].createElement(
+        'div',
+        { className: 'doc-category' },
+        _react2['default'].createElement(
+          'div',
+          { className: 'doc-category-title' },
+          'values'
+        ),
+        type.getValues().map(function (value) {
+          return _react2['default'].createElement(
+            'div',
+            { key: value.name, className: 'doc-category-item' },
+            _react2['default'].createElement(
+              'div',
+              { className: 'enum-value' },
+              value.name
+            ),
+            _react2['default'].createElement(Description, {
+              className: 'doc-value-description',
+              markdown: type.description
+            })
+          );
+        })
+      );
+    }
+
+    return _react2['default'].createElement(
+      'div',
+      null,
+      _react2['default'].createElement(Description, {
+        className: 'doc-type-description',
+        markdown: type.description || 'No Description'
+      }),
+      type instanceof _graphqlType.GraphQLObjectType && typesDef,
+      fieldsDef,
+      valuesDef,
+      !(type instanceof _graphqlType.GraphQLObjectType) && typesDef
+    );
+  };
+
+  return TypeDoc;
+})(_react2['default'].Component);
+
+var FieldDoc = (function (_React$Component4) {
+  _inherits(FieldDoc, _React$Component4);
+
+  function FieldDoc() {
+    _classCallCheck(this, FieldDoc);
+
+    _React$Component4.apply(this, arguments);
+  }
+
+  // Renders a type link
+
+  FieldDoc.prototype.shouldComponentUpdate = function shouldComponentUpdate(nextProps) {
+    return this.props.field !== nextProps.field;
+  };
+
+  FieldDoc.prototype.render = function render() {
+    var _this2 = this;
+
+    var field = this.props.field;
+
+    var argsDef;
+    if (field.args && field.args.length > 0) {
+      argsDef = _react2['default'].createElement(
+        'div',
+        { className: 'doc-category' },
+        _react2['default'].createElement(
+          'div',
+          { className: 'doc-category-title' },
+          'arguments'
+        ),
+        field.args.map(function (arg) {
+          return _react2['default'].createElement(
+            'div',
+            { key: arg.name, className: 'doc-category-item' },
+            _react2['default'].createElement(
+              'div',
+              null,
+              _react2['default'].createElement(
+                'span',
+                { className: 'arg-name' },
+                arg.name
+              ),
+              ': ',
+              _react2['default'].createElement(TypeLink, { type: arg.type, onClick: _this2.props.onClickType })
+            ),
+            _react2['default'].createElement(Description, {
+              className: 'doc-value-description',
+              markdown: arg.description
+            })
+          );
+        })
+      );
+    }
+
+    return _react2['default'].createElement(
+      'div',
+      null,
+      _react2['default'].createElement(Description, {
+        className: 'doc-type-description',
+        markdown: field.description || 'No Description'
+      }),
+      _react2['default'].createElement(
+        'div',
+        { className: 'doc-category' },
+        _react2['default'].createElement(
+          'div',
+          { className: 'doc-category-title' },
+          'type'
+        ),
+        _react2['default'].createElement(TypeLink, { type: field.type, onClick: this.props.onClickType })
+      ),
+      argsDef
+    );
+  };
+
+  return FieldDoc;
+})(_react2['default'].Component);
+
+var TypeLink = (function (_React$Component5) {
+  _inherits(TypeLink, _React$Component5);
+
+  function TypeLink() {
+    _classCallCheck(this, TypeLink);
+
+    _React$Component5.apply(this, arguments);
+  }
+
+  TypeLink.prototype.shouldComponentUpdate = function shouldComponentUpdate(nextProps) {
+    return this.props.type !== nextProps.type;
+  };
+
+  TypeLink.prototype.render = function render() {
+    return renderType(this.props.type, this.props.onClick);
+  };
+
+  return TypeLink;
+})(_react2['default'].Component);
+
+function renderType(type, onClick) {
+  if (type instanceof _graphqlType.GraphQLNonNull) {
+    return _react2['default'].createElement(
+      'span',
+      null,
+      renderType(type.ofType, onClick),
+      '!'
+    );
+  }
+  if (type instanceof _graphqlType.GraphQLList) {
+    return _react2['default'].createElement(
+      'span',
+      null,
+      '[',
+      renderType(type.ofType, onClick),
+      ']'
+    );
+  }
+  return _react2['default'].createElement(
+    'a',
+    { className: 'type-name', onClick: function (event) {
+        return onClick(type, event);
+      } },
+    type.name
+  );
+}
+
+// Renders a description
+
+var Description = (function (_React$Component6) {
+  _inherits(Description, _React$Component6);
+
+  function Description() {
+    _classCallCheck(this, Description);
+
+    _React$Component6.apply(this, arguments);
+  }
+
+  Description.prototype.shouldComponentUpdate = function shouldComponentUpdate(nextProps) {
+    return this.props.markdown !== nextProps.markdown;
+  };
+
+  Description.prototype.render = function render() {
+    var markdown = this.props.markdown;
+    if (!markdown) {
+      return _react2['default'].createElement('div', null);
+    }
+
+    var html = _marked2['default'](markdown);
+    return _react2['default'].createElement('div', {
+      className: this.props.className,
+      dangerouslySetInnerHTML: { __html: html }
+    });
+  };
+
+  return Description;
+})(_react2['default'].Component);
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"graphql/type":138,"marked":180}],4:[function(require,module,exports){
+(function (global){
+/**
+ *  Copyright (c) 2015, Facebook, Inc.
+ *  All rights reserved.
+ *
+ *  This source code is licensed under the license found in the
+ *  LICENSE-examples file in the root directory of this source tree.
+ */
+
 "use strict";
 
 exports.__esModule = true;
@@ -387,7 +951,7 @@ var ExecuteButton = (function (_React$Component) {
 
 exports.ExecuteButton = ExecuteButton;
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 (function (global){
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -413,6 +977,18 @@ var _react = (typeof window !== "undefined" ? window['React'] : typeof global !=
 
 var _react2 = _interopRequireDefault(_react);
 
+var _reactDom = (typeof window !== "undefined" ? window['ReactDOM'] : typeof global !== "undefined" ? global['ReactDOM'] : null);
+
+var _reactDom2 = _interopRequireDefault(_reactDom);
+
+var _graphqlType = require('graphql/type');
+
+var _graphqlUtilities = require('graphql/utilities');
+
+var _graphqlJsutilsFind = require('graphql/jsutils/find');
+
+var _graphqlJsutilsFind2 = _interopRequireDefault(_graphqlJsutilsFind);
+
 var _ExecuteButton = require('./ExecuteButton');
 
 var _QueryEditor = require('./QueryEditor');
@@ -421,17 +997,13 @@ var _VariableEditor = require('./VariableEditor');
 
 var _ResultViewer = require('./ResultViewer');
 
-// import { DocExplorer } from './DocExplorer';
-
-var _graphql = require('graphql');
-
-var _graphqlUtilities = require('graphql/utilities');
-
-var _graphqlJsutilsFind = require('graphql/jsutils/find');
-
-var _graphqlJsutilsFind2 = _interopRequireDefault(_graphqlJsutilsFind);
+var _DocExplorer = require('./DocExplorer');
 
 var _utilityFillLeafs = require('../utility/fillLeafs');
+
+var _utilityElementPosition = require('../utility/elementPosition');
+
+var _utilityIntrospectionQueries = require('../utility/introspectionQueries');
 
 /**
  * GraphiQL
@@ -448,6 +1020,10 @@ var _utilityFillLeafs = require('../utility/fillLeafs');
  *
  *   - query: an optional GraphQL string to use as the initial displayed query,
  *     if not provided, the stored query or defaultQuery will be used.
+ *
+ *   - response: an optional JSON string to use as the initial displayed
+ *     response. If not provided, no response will be initialy shown. You might
+ *     provide this if illustrating the result of the initial query.
  *
  *   - storage: an instance of [Storage][] GraphiQL will use to persist state.
  *     Only `getItem` and `setItem` are called. Default: window.localStorage
@@ -498,25 +1074,42 @@ var GraphiQL = (function (_React$Component) {
     var insertions = _fillLeafs.insertions;
     var result = _fillLeafs.result;
 
-    if (insertions) {
+    if (insertions && insertions.length > 0) {
       var editor = this.refs.queryEditor.getCodeMirror();
-      editor.setValue(result);
-      var added = 0;
-      var markers = insertions.map(function (_ref) {
-        var index = _ref.index;
-        var string = _ref.string;
-        return editor.markText(editor.posFromIndex(index + added), editor.posFromIndex(index + (added += string.length)), {
-          className: 'autoInsertedLeaf',
-          clearOnEnter: true,
-          title: 'Automatically added leaf fields'
+      editor.operation(function () {
+        var cursor = editor.getCursor();
+        var cursorIndex = editor.indexFromPos(cursor);
+        editor.setValue(result);
+        var added = 0;
+        var markers = insertions.map(function (_ref) {
+          var index = _ref.index;
+          var string = _ref.string;
+          return editor.markText(editor.posFromIndex(index + added), editor.posFromIndex(index + (added += string.length)), {
+            className: 'autoInsertedLeaf',
+            clearOnEnter: true,
+            title: 'Automatically added leaf fields'
+          });
         });
+        setTimeout(function () {
+          return markers.forEach(function (marker) {
+            return marker.clear();
+          });
+        }, 7000);
+        var newCursorIndex = cursorIndex;
+        insertions.forEach(function (_ref2) {
+          var index = _ref2.index;
+          var string = _ref2.string;
+
+          if (index < cursorIndex) {
+            newCursorIndex += string.length;
+          }
+        });
+        var newCursor = editor.posFromIndex(newCursorIndex);
+        editor.setCursor(newCursor);
       });
-      setTimeout(function () {
-        return markers.forEach(function (marker) {
-          return marker.clear();
-        });
-      }, 7000);
     }
+
+    return result;
   };
 
   // Lifecycle
@@ -525,8 +1118,9 @@ var GraphiQL = (function (_React$Component) {
     key: 'propTypes',
     value: {
       fetcher: _react.PropTypes.func.isRequired,
-      schema: _react.PropTypes.instanceOf(_graphql.GraphQLSchema),
+      schema: _react.PropTypes.instanceOf(_graphqlType.GraphQLSchema),
       query: _react.PropTypes.string,
+      response: _react.PropTypes.string,
       storage: _react.PropTypes.shape({
         getItem: _react.PropTypes.func,
         setItem: _react.PropTypes.func
@@ -541,11 +1135,228 @@ var GraphiQL = (function (_React$Component) {
   }]);
 
   function GraphiQL(props) {
+    var _this = this;
+
     _classCallCheck(this, GraphiQL);
 
     _React$Component.call(this);
 
     // Ensure props are correct
+
+    this._runEditorQuery = function () {
+      _this._editorQueryID++;
+      var queryID = _this._editorQueryID;
+
+      // Use the edited query after autoCompleteLeafs() runs or,
+      // in case autoCompletion fails (the function returns undefined),
+      // the current query from the editor.
+      var editedQuery = _this.autoCompleteLeafs() || _this.state.query;
+
+      _this._fetchQuery(editedQuery, _this.state.variables, function (result) {
+        if (queryID === _this._editorQueryID) {
+          _this.setState({ response: JSON.stringify(result, null, 2) });
+        }
+      });
+    };
+
+    this._onEditQuery = function (value) {
+      _this._storageSet('query', value);
+      _this.setState({ query: value });
+      if (_this.props.onEditQuery) {
+        return _this.props.onEditQuery(value);
+      }
+    };
+
+    this._onEditVariables = function (value) {
+      _this._storageSet('variables', value);
+      _this.setState({ variables: value });
+      if (_this.props.onEditVariables) {
+        _this.props.onEditVariables(value);
+      }
+    };
+
+    this._onHintInformationRender = function (elem) {
+      elem.addEventListener('click', _this._onClickHintInformation);
+
+      var onRemoveFn;
+      elem.addEventListener('DOMNodeRemoved', onRemoveFn = function () {
+        elem.removeEventListener('DOMNodeRemoved', onRemoveFn);
+        elem.removeEventListener('click', _this._onClickHintInformation);
+      });
+    };
+
+    this._onClickHintInformation = function (event) {
+      if (event.target.className === 'typeName') {
+        var typeName = event.target.innerHTML;
+        var schema = _this.state.schema;
+        if (schema) {
+          var type = schema.getType(typeName);
+          if (type) {
+            _this.setState({ docsOpen: true }, function () {
+              _this.refs.docExplorer.showDoc(type);
+            });
+          }
+        }
+      }
+    };
+
+    this._onToggleDocs = function () {
+      _this.setState({ docsOpen: !_this.state.docsOpen });
+    };
+
+    this._onResizeStart = function (downEvent) {
+      if (!_this._didClickDragBar(downEvent)) {
+        return;
+      }
+
+      downEvent.preventDefault();
+
+      var offset = downEvent.clientX - _utilityElementPosition.getLeft(downEvent.target);
+
+      var onMouseMove = function onMouseMove(moveEvent) {
+        if (moveEvent.buttons === 0) {
+          return onMouseUp();
+        }
+
+        var editorBar = _reactDom2['default'].findDOMNode(_this.refs.editorBar);
+        var leftSize = moveEvent.clientX - _utilityElementPosition.getLeft(editorBar) - offset;
+        var rightSize = editorBar.clientWidth - leftSize;
+        _this.setState({ editorFlex: leftSize / rightSize });
+      };
+
+      var onMouseUp = (function (_onMouseUp) {
+        function onMouseUp() {
+          return _onMouseUp.apply(this, arguments);
+        }
+
+        onMouseUp.toString = function () {
+          return _onMouseUp.toString();
+        };
+
+        return onMouseUp;
+      })(function () {
+        _this._storageSet('editorFlex', _this.state.editorFlex);
+
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+        onMouseMove = null;
+        onMouseUp = null;
+      });
+
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    };
+
+    this._onDocsResizeStart = function (downEvent) {
+      downEvent.preventDefault();
+
+      var hadWidth = _this.state.docsWidth;
+      var offset = downEvent.clientX - _utilityElementPosition.getLeft(downEvent.target);
+
+      var onMouseMove = function onMouseMove(moveEvent) {
+        if (moveEvent.buttons === 0) {
+          return onMouseUp();
+        }
+
+        var app = _reactDom2['default'].findDOMNode(_this);
+        var cursorPos = moveEvent.clientX - _utilityElementPosition.getLeft(app) - offset;
+        var docsSize = app.clientWidth - cursorPos;
+
+        if (docsSize < 100) {
+          _this.setState({ docsOpen: false });
+        } else {
+          _this.setState({
+            docsOpen: true,
+            docsWidth: Math.min(docsSize, 650)
+          });
+        }
+      };
+
+      var onMouseUp = (function (_onMouseUp2) {
+        function onMouseUp() {
+          return _onMouseUp2.apply(this, arguments);
+        }
+
+        onMouseUp.toString = function () {
+          return _onMouseUp2.toString();
+        };
+
+        return onMouseUp;
+      })(function () {
+        if (_this.state.docsOpen) {
+          _this._storageSet('docExplorerWidth', _this.state.docsWidth);
+        } else {
+          _this.setState({ docsWidth: hadWidth });
+        }
+
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+        onMouseMove = null;
+        onMouseUp = null;
+      });
+
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    };
+
+    this._onVariableResizeStart = function (downEvent) {
+      downEvent.preventDefault();
+
+      var didMove = false;
+      var wasOpen = _this.state.variableEditorOpen;
+      var hadHeight = _this.state.variableEditorHeight;
+      var offset = downEvent.clientY - _utilityElementPosition.getTop(downEvent.target);
+
+      var onMouseMove = function onMouseMove(moveEvent) {
+        if (moveEvent.buttons === 0) {
+          return onMouseUp();
+        }
+
+        didMove = true;
+
+        var editorBar = _reactDom2['default'].findDOMNode(_this.refs.editorBar);
+        var topSize = moveEvent.clientY - _utilityElementPosition.getTop(editorBar) - offset;
+        var bottomSize = editorBar.clientHeight - topSize;
+        if (bottomSize < 60) {
+          _this.setState({
+            variableEditorOpen: false,
+            variableEditorHeight: hadHeight
+          });
+        } else {
+          _this.setState({
+            variableEditorOpen: true,
+            variableEditorHeight: bottomSize
+          });
+        }
+      };
+
+      var onMouseUp = (function (_onMouseUp3) {
+        function onMouseUp() {
+          return _onMouseUp3.apply(this, arguments);
+        }
+
+        onMouseUp.toString = function () {
+          return _onMouseUp3.toString();
+        };
+
+        return onMouseUp;
+      })(function () {
+        if (didMove) {
+          _this._storageSet('variableEditorHeight', _this.state.variableEditorHeight);
+        } else {
+          _this.setState({ variableEditorOpen: !wasOpen });
+        }
+
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+        onMouseMove = null;
+        onMouseUp = null;
+      });
+
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    };
+
     if (typeof props.fetcher !== 'function') {
       throw new TypeError('GraphiQL requires a fetcher function.');
     }
@@ -564,11 +1375,12 @@ var GraphiQL = (function (_React$Component) {
       schema: props.schema,
       query: query,
       variables: variables,
-      response: null,
+      response: props.response,
       editorFlex: this._storageGet('editorFlex') || 1,
       variableEditorOpen: Boolean(variables),
       variableEditorHeight: this._storageGet('variableEditorHeight') || 200,
-      typeToExplore: null
+      docsOpen: false,
+      docsWidth: this._storageGet('docExplorerWidth') || 350
     };
 
     // Ensure only the last executed editor query is rendered.
@@ -580,28 +1392,41 @@ var GraphiQL = (function (_React$Component) {
   GraphiQL.prototype.componentWillReceiveProps = function componentWillReceiveProps(nextProps) {
     var nextQuery = this.state.query;
     var nextVariables = this.state.variables;
+    var nextResponse = this.state.response;
     if (nextProps.query && nextProps.query !== nextQuery) {
       nextQuery = nextProps.query;
     }
     if (nextProps.variables && nextProps.variables !== nextVariables) {
       nextVariables = nextProps.variables;
     }
+    if (nextProps.response && nextProps.response !== nextResponse) {
+      nextResponse = nextProps.response;
+    }
     this.setState({
       query: nextQuery,
-      variables: nextVariables
+      variables: nextVariables,
+      response: nextResponse
     });
   };
 
   GraphiQL.prototype.componentDidMount = function componentDidMount() {
-    var _this = this;
+    var _this2 = this;
 
     if (!this.state.schema) {
-      this._fetchQuery(_graphqlUtilities.introspectionQuery, null, function (result) {
+      var fetcher = this.props.fetcher;
+
+      // Try the stock introspection query first, falling back on the
+      // sans-subscriptions query for services which do not yet support it.
+      fetcher({ query: _utilityIntrospectionQueries.introspectionQuery })['catch'](function () {
+        return fetcher({ query: _utilityIntrospectionQueries.introspectionQuerySansSubscriptions });
+      }).then(function (result) {
         if (!result.data) {
-          _this.setState({ response: JSON.stringify(result, null, 2) });
+          _this2.setState({ response: JSON.stringify(result, null, 2) });
         } else {
-          _this.setState({ schema: _graphqlUtilities.buildClientSchema(result.data) });
+          _this2.setState({ schema: _graphqlUtilities.buildClientSchema(result.data) });
         }
+      })['catch'](function (error) {
+        _this2.setState({ response: error && error.stack || error });
       });
     }
   };
@@ -631,12 +1456,19 @@ var GraphiQL = (function (_React$Component) {
       return child.type === GraphiQL.Footer;
     });
 
-    var variableOpen = this.state.variableEditorOpen;
-    var variableHeight = variableOpen ? this.state.variableEditorHeight : null;
-
     var queryWrapStyle = {
       WebkitFlex: this.state.editorFlex,
       flex: this.state.editorFlex
+    };
+
+    var docWrapStyle = {
+      display: this.state.docsOpen ? 'block' : 'none',
+      width: this.state.docsWidth
+    };
+
+    var variableOpen = this.state.variableEditorOpen;
+    var variableStyle = {
+      height: variableOpen ? this.state.variableEditorHeight : null
     };
 
     return _react2['default'].createElement(
@@ -644,169 +1476,102 @@ var GraphiQL = (function (_React$Component) {
       { id: 'graphiql-container' },
       _react2['default'].createElement(
         'div',
-        { className: 'topBar' },
-        logo,
-        _react2['default'].createElement(_ExecuteButton.ExecuteButton, { onClick: this._runEditorQuery.bind(this) }),
-        toolbar
-      ),
-      _react2['default'].createElement(
-        'div',
-        {
-          ref: 'editorBar',
-          className: 'editorBar',
-          onMouseDown: this._onResizeStart.bind(this)
-        },
+        { className: 'editorWrap' },
         _react2['default'].createElement(
           'div',
-          { className: 'queryWrap', style: queryWrapStyle },
-          _react2['default'].createElement(_QueryEditor.QueryEditor, {
-            ref: 'queryEditor',
-            schema: this.state.schema,
-            value: this.state.query,
-            onEdit: this._onEditQuery.bind(this),
-            onHintInformationRender: this._onHintInformationRender.bind(this)
-          }),
+          { className: 'topBarWrap' },
           _react2['default'].createElement(
             'div',
-            { className: 'variable-editor', style: { height: variableHeight } },
-            _react2['default'].createElement(
-              'div',
-              {
-                className: 'variable-editor-title',
-                style: { cursor: variableOpen ? 'row-resize' : 'n-resize' },
-                onMouseDown: this._onVariableResizeStart.bind(this)
-              },
-              'Query Variables'
-            ),
-            _react2['default'].createElement(_VariableEditor.VariableEditor, {
-              value: this.state.variables,
-              onEdit: this._onEditVariables.bind(this)
-            })
+            { className: 'topBar' },
+            logo,
+            _react2['default'].createElement(_ExecuteButton.ExecuteButton, { onClick: this._runEditorQuery }),
+            toolbar
+          ),
+          !this.state.docsOpen && _react2['default'].createElement(
+            'button',
+            { className: 'docExplorerShow', onClick: this._onToggleDocs },
+            'Docs'
           )
         ),
         _react2['default'].createElement(
           'div',
-          { className: 'resultWrap' },
-          _react2['default'].createElement(_ResultViewer.ResultViewer, { ref: 'result', value: this.state.response }),
-          footer
+          {
+            ref: 'editorBar',
+            className: 'editorBar',
+            onMouseDown: this._onResizeStart
+          },
+          _react2['default'].createElement(
+            'div',
+            { className: 'queryWrap', style: queryWrapStyle },
+            _react2['default'].createElement(_QueryEditor.QueryEditor, {
+              ref: 'queryEditor',
+              schema: this.state.schema,
+              value: this.state.query,
+              onEdit: this._onEditQuery,
+              onHintInformationRender: this._onHintInformationRender
+            }),
+            _react2['default'].createElement(
+              'div',
+              { className: 'variable-editor', style: variableStyle },
+              _react2['default'].createElement(
+                'div',
+                {
+                  className: 'variable-editor-title',
+                  style: { cursor: variableOpen ? 'row-resize' : 'n-resize' },
+                  onMouseDown: this._onVariableResizeStart
+                },
+                'Query Variables'
+              ),
+              _react2['default'].createElement(_VariableEditor.VariableEditor, {
+                value: this.state.variables,
+                onEdit: this._onEditVariables
+              })
+            )
+          ),
+          _react2['default'].createElement(
+            'div',
+            { className: 'resultWrap' },
+            _react2['default'].createElement(_ResultViewer.ResultViewer, { ref: 'result', value: this.state.response }),
+            footer
+          )
         )
       ),
-      _react2['default'].createElement('div', { className: 'docExplorerWrap' })
+      _react2['default'].createElement(
+        'div',
+        { className: 'docExplorerWrap', style: docWrapStyle },
+        _react2['default'].createElement('div', {
+          className: 'docExplorerResizer',
+          onMouseDown: this._onDocsResizeStart
+        }),
+        _react2['default'].createElement(
+          _DocExplorer.DocExplorer,
+          { ref: 'docExplorer', schema: this.state.schema },
+          _react2['default'].createElement(
+            'div',
+            { className: 'docExplorerHide', onClick: this._onToggleDocs },
+            '✕'
+          )
+        )
+      )
     );
   };
 
   // Private methods
 
-  GraphiQL.prototype._storageGet = function _storageGet(storage, name) {
+  GraphiQL.prototype._storageGet = function _storageGet(name) {
     return this._storage.getItem('graphiql:' + name);
   };
 
-  GraphiQL.prototype._storageSet = function _storageSet(storage, name, value) {
+  GraphiQL.prototype._storageSet = function _storageSet(name, value) {
     this._storage.setItem('graphiql:' + name, value);
   };
 
   GraphiQL.prototype._fetchQuery = function _fetchQuery(query, variables, cb) {
-    var _this2 = this;
-
-    this.props.fetcher({ query: query, variables: variables }).then(cb)['catch'](function (error) {
-      _this2.setState({ response: JSON.stringify(error, null, 2) });
-    });
-  };
-
-  GraphiQL.prototype._runEditorQuery = function _runEditorQuery() {
     var _this3 = this;
 
-    this._editorQueryID++;
-    var queryID = this._editorQueryID;
-
-    this.autoCompleteLeafs();
-
-    this._fetchQuery(this.state.query, this.state.variables, function (result) {
-      if (queryID === _this3._editorQueryID) {
-        _this3.setState({ response: JSON.stringify(result, null, 2) });
-      }
+    this.props.fetcher({ query: query, variables: variables }).then(cb)['catch'](function (error) {
+      _this3.setState({ response: error && error.stack || error });
     });
-  };
-
-  GraphiQL.prototype._onEditQuery = function _onEditQuery(value) {
-    this._storageSet('query', value);
-    this.setState({ query: value });
-    if (this.props.onEditQuery) {
-      return this.props.onEditQuery(value);
-    }
-  };
-
-  GraphiQL.prototype._onEditVariables = function _onEditVariables(value) {
-    this._storageSet('variables', value);
-    this.setState({ variables: value });
-    if (this.props.onEditVariables) {
-      this.props.onEditVariables(value);
-    }
-  };
-
-  GraphiQL.prototype._onHintInformationRender = function _onHintInformationRender(elem) {
-    var onClickHintInformation = this._onClickHintInformation.bind(this);
-    elem.addEventListener('click', onClickHintInformation);
-
-    var onRemoveFn;
-    elem.addEventListener('DOMNodeRemoved', onRemoveFn = function () {
-      elem.removeEventListener('DOMNodeRemoved', onRemoveFn);
-      elem.removeEventListener('click', onClickHintInformation);
-    });
-  };
-
-  GraphiQL.prototype._onClickHintInformation = function _onClickHintInformation(event) {
-    if (event.target.className === 'infoType') {
-      var typeName = event.target.innerHTML;
-      this.setState({
-        typeToExplore: typeName
-      });
-    }
-  };
-
-  GraphiQL.prototype._onResizeStart = function _onResizeStart(downEvent) {
-    var _this4 = this;
-
-    if (!this._didClickDragBar(downEvent)) {
-      return;
-    }
-
-    downEvent.preventDefault();
-
-    var offset = downEvent.clientX - getLeft(downEvent.target);
-
-    var onMouseMove = function onMouseMove(moveEvent) {
-      if (moveEvent.buttons === 0) {
-        return onMouseUp();
-      }
-
-      var editorBar = _react2['default'].findDOMNode(_this4.refs.editorBar);
-      var leftSize = moveEvent.clientX - getLeft(editorBar) - offset;
-      var rightSize = editorBar.clientWidth - leftSize;
-      _this4.setState({ editorFlex: leftSize / rightSize });
-    };
-
-    var onMouseUp = (function (_onMouseUp) {
-      function onMouseUp() {
-        return _onMouseUp.apply(this, arguments);
-      }
-
-      onMouseUp.toString = function () {
-        return _onMouseUp.toString();
-      };
-
-      return onMouseUp;
-    })(function () {
-      _this4._storageSet('editorFlex', _this4.state.editorFlex);
-
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
-      onMouseMove = null;
-      onMouseUp = null;
-    });
-
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
   };
 
   GraphiQL.prototype._didClickDragBar = function _didClickDragBar(event) {
@@ -820,7 +1585,7 @@ var GraphiQL = (function (_React$Component) {
       return false;
     }
     // Specifically the result window's drag bar.
-    var resultWindow = _react2['default'].findDOMNode(this.refs.result);
+    var resultWindow = _reactDom2['default'].findDOMNode(this.refs.result);
     while (target) {
       if (target === resultWindow) {
         return true;
@@ -828,66 +1593,6 @@ var GraphiQL = (function (_React$Component) {
       target = target.parentNode;
     }
     return false;
-  };
-
-  GraphiQL.prototype._onVariableResizeStart = function _onVariableResizeStart(downEvent) {
-    var _this5 = this;
-
-    downEvent.preventDefault();
-
-    var didMove = false;
-    var wasOpen = this.state.variableEditorOpen;
-    var hadHeight = this.state.variableEditorHeight;
-    var offset = downEvent.clientY - getTop(downEvent.target);
-
-    var onMouseMove = function onMouseMove(moveEvent) {
-      if (moveEvent.buttons === 0) {
-        return onMouseUp();
-      }
-
-      didMove = true;
-
-      var editorBar = _react2['default'].findDOMNode(_this5.refs.editorBar);
-      var topSize = moveEvent.clientY - getTop(editorBar) - offset;
-      var bottomSize = editorBar.clientHeight - topSize;
-      if (bottomSize < 60) {
-        _this5.setState({
-          variableEditorOpen: false,
-          variableEditorHeight: hadHeight
-        });
-      } else {
-        _this5.setState({
-          variableEditorOpen: true,
-          variableEditorHeight: bottomSize
-        });
-      }
-    };
-
-    var onMouseUp = (function (_onMouseUp2) {
-      function onMouseUp() {
-        return _onMouseUp2.apply(this, arguments);
-      }
-
-      onMouseUp.toString = function () {
-        return _onMouseUp2.toString();
-      };
-
-      return onMouseUp;
-    })(function () {
-      if (didMove) {
-        _this5._storageSet('variableEditorHeight', _this5.state.variableEditorHeight);
-      } else {
-        _this5.setState({ variableEditorOpen: !wasOpen });
-      }
-
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
-      onMouseMove = null;
-      onMouseUp = null;
-    });
-
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
   };
 
   return GraphiQL;
@@ -967,34 +1672,8 @@ GraphiQL.Footer = (function (_React$Component4) {
 })(_react2['default'].Component);
 
 var defaultQuery = '# Welcome to GraphiQL\n#\n# GraphiQL is an in-browser IDE for writing, validating, and\n# testing GraphQL queries.\n#\n# Type queries into this side of the screen, and you will\n# see intelligent typeaheads aware of the current GraphQL type schema and\n# live syntax and validation errors highlighted within the text.\n#\n# To bring up the auto-complete at any point, just press Ctrl-Space.\n#\n# Press the run button above, or Cmd-Enter to execute the query, and the result\n# will appear in the pane to the right.\n\n';
-
-function getLeft(initialElem) {
-  var pt = 0;
-  var elem = initialElem;
-  while (elem.offsetParent) {
-    pt += elem.offsetLeft;
-    elem = elem.offsetParent;
-  }
-  return pt;
-}
-
-function getTop(initialElem) {
-  var pt = 0;
-  var elem = initialElem;
-  while (elem.offsetParent) {
-    pt += elem.offsetTop;
-    elem = elem.offsetParent;
-  }
-  return pt;
-}
-// Temporarily disabled.
-/* <DocExplorer
-  ref="docExplorer"
-  schema={this.state.schema}
-  typeName={this.state.typeToExplore}
-/> */
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../utility/fillLeafs":9,"./ExecuteButton":3,"./QueryEditor":5,"./ResultViewer":6,"./VariableEditor":7,"graphql":127,"graphql/jsutils/find":128,"graphql/utilities":154}],5:[function(require,module,exports){
+},{"../utility/elementPosition":10,"../utility/fillLeafs":11,"../utility/introspectionQueries":12,"./DocExplorer":3,"./ExecuteButton":4,"./QueryEditor":6,"./ResultViewer":7,"./VariableEditor":8,"graphql/jsutils/find":123,"graphql/type":138,"graphql/utilities":147}],6:[function(require,module,exports){
 (function (global){
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -1020,6 +1699,10 @@ var _react = (typeof window !== "undefined" ? window['React'] : typeof global !=
 
 var _react2 = _interopRequireDefault(_react);
 
+var _reactDom = (typeof window !== "undefined" ? window['ReactDOM'] : typeof global !== "undefined" ? global['ReactDOM'] : null);
+
+var _reactDom2 = _interopRequireDefault(_reactDom);
+
 var _marked = require('marked');
 
 var _marked2 = _interopRequireDefault(_marked);
@@ -1028,7 +1711,7 @@ var _codemirror = require('codemirror');
 
 var _codemirror2 = _interopRequireDefault(_codemirror);
 
-var _graphql = require('graphql');
+var _graphqlType = require('graphql/type');
 
 require('codemirror/addon/hint/show-hint');
 
@@ -1071,7 +1754,7 @@ var QueryEditor = (function (_React$Component) {
   _createClass(QueryEditor, null, [{
     key: 'propTypes',
     value: {
-      schema: _react.PropTypes.instanceOf(_graphql.GraphQLSchema),
+      schema: _react.PropTypes.instanceOf(_graphqlType.GraphQLSchema),
       value: _react.PropTypes.string,
       onEdit: _react.PropTypes.func
     },
@@ -1079,6 +1762,8 @@ var QueryEditor = (function (_React$Component) {
   }]);
 
   function QueryEditor(props) {
+    var _this = this;
+
     _classCallCheck(this, QueryEditor);
 
     _React$Component.call(this);
@@ -1086,6 +1771,106 @@ var QueryEditor = (function (_React$Component) {
     // Keep a cached version of the value, this cache will be updated when the
     // editor is updated, which can later be used to protect the editor from
     // unnecessary updates during the update lifecycle.
+
+    this._onKeyUp = function (cm, event) {
+      var code = event.keyCode;
+      if (code >= 65 && code <= 90 || // letters
+      !event.shiftKey && code >= 48 && code <= 57 || // numbers
+      event.shiftKey && code === 189 || // underscore
+      event.shiftKey && code === 50 || // @
+      event.shiftKey && code === 57 // (
+      ) {
+          _this.editor.execCommand('autocomplete');
+        }
+    };
+
+    this._onEdit = function () {
+      if (!_this.ignoreChangeEvent) {
+        _this.cachedValue = _this.editor.getValue();
+        if (_this.props.onEdit) {
+          _this.props.onEdit(_this.cachedValue);
+        }
+      }
+    };
+
+    this._onHasCompletion = function (cm, data) {
+      var wrapper;
+      var information;
+
+      // When a hint result is selected, we touch the UI.
+      _codemirror2['default'].on(data, 'select', function (ctx, el) {
+        // Only the first time (usually when the hint UI is first displayed)
+        // do we create the wrapping node.
+        if (!wrapper) {
+          // Wrap the existing hint UI, so we have a place to put information.
+          var hintsUl = el.parentNode;
+          var container = hintsUl.parentNode;
+          wrapper = document.createElement('div');
+          container.appendChild(wrapper);
+
+          // CodeMirror vertically inverts the hint UI if there is not enough
+          // space below the cursor. Since this modified UI appends to the bottom
+          // of CodeMirror's existing UI, it could cover the cursor. This adjusts
+          // the positioning of the hint UI to accomodate.
+          var top = hintsUl.style.top;
+          var bottom = '';
+          var cursorTop = cm.cursorCoords().top;
+          if (parseInt(top, 10) < cursorTop) {
+            top = '';
+            bottom = window.innerHeight - cursorTop + 3 + 'px';
+          }
+
+          // Style the wrapper, remove positioning from hints. Note that usage
+          // of this option will need to specify CSS to remove some styles from
+          // the existing hint UI.
+          wrapper.className = 'CodeMirror-hints-wrapper';
+          wrapper.style.left = hintsUl.style.left;
+          wrapper.style.top = top;
+          wrapper.style.bottom = bottom;
+          hintsUl.style.left = '';
+          hintsUl.style.top = '';
+
+          // This "information" node will contain the additional info about the
+          // highlighted typeahead option.
+          information = document.createElement('div');
+          information.className = 'CodeMirror-hint-information';
+          if (bottom) {
+            wrapper.appendChild(information);
+            wrapper.appendChild(hintsUl);
+          } else {
+            wrapper.appendChild(hintsUl);
+            wrapper.appendChild(information);
+          }
+
+          // When CodeMirror attempts to remove the hint UI, we detect that it was
+          // removed from our wrapper and in turn remove the wrapper from the
+          // original container.
+          var onRemoveFn;
+          wrapper.addEventListener('DOMNodeRemoved', onRemoveFn = function (event) {
+            if (event.target === hintsUl) {
+              wrapper.removeEventListener('DOMNodeRemoved', onRemoveFn);
+              wrapper.parentNode.removeChild(wrapper);
+              wrapper = null;
+              information = null;
+              onRemoveFn = null;
+            }
+          });
+        }
+
+        // Now that the UI has been set up, add info to information.
+        var description = ctx.description ? _marked2['default'](ctx.description, { smartypants: true }) : 'Self descriptive.';
+        var type = ctx.type ? '<span class="infoType">' + renderType(ctx.type) + '</span>' : '';
+
+        information.innerHTML = '<div class="content">' + (description.slice(0, 3) === '<p>' ? '<p>' + type + description.slice(3) : type + description) + '</div>';
+
+        // Additional rendering?
+        var onHintInformationRender = _this.props.onHintInformationRender;
+        if (onHintInformationRender) {
+          onHintInformationRender(information);
+        }
+      });
+    };
+
     this.cachedValue = props.value || '';
   }
 
@@ -1099,9 +1884,9 @@ var QueryEditor = (function (_React$Component) {
   };
 
   QueryEditor.prototype.componentDidMount = function componentDidMount() {
-    var _this = this;
+    var _this2 = this;
 
-    this.editor = _codemirror2['default'](_react2['default'].findDOMNode(this), {
+    this.editor = _codemirror2['default'](_reactDom2['default'].findDOMNode(this), {
       value: this.props.value || '',
       lineNumbers: true,
       tabSize: 2,
@@ -1125,10 +1910,10 @@ var QueryEditor = (function (_React$Component) {
       gutters: ['CodeMirror-linenumbers', 'CodeMirror-foldgutter'],
       extraKeys: {
         'Cmd-Space': function CmdSpace() {
-          return _this.editor.showHint({ completeSingle: true });
+          return _this2.editor.showHint({ completeSingle: true });
         },
         'Ctrl-Space': function CtrlSpace() {
-          return _this.editor.showHint({ completeSingle: true });
+          return _this2.editor.showHint({ completeSingle: true });
         },
 
         // Editor improvements
@@ -1139,12 +1924,15 @@ var QueryEditor = (function (_React$Component) {
       }
     });
 
-    this.editor.on('change', this._onEdit.bind(this));
-    this.editor.on('keyup', this._onKeyUp.bind(this));
-    this.editor.on('hasCompletion', this._onHasCompletion.bind(this));
+    this.editor.on('change', this._onEdit);
+    this.editor.on('keyup', this._onKeyUp);
+    this.editor.on('hasCompletion', this._onHasCompletion);
   };
 
   QueryEditor.prototype.componentWillUnmount = function componentWillUnmount() {
+    this.editor.off('change', this._onEdit);
+    this.editor.off('keyup', this._onKeyUp);
+    this.editor.off('hasCompletion', this._onHasCompletion);
     this.editor = null;
   };
 
@@ -1165,111 +1953,6 @@ var QueryEditor = (function (_React$Component) {
     this.ignoreChangeEvent = false;
   };
 
-  QueryEditor.prototype._onKeyUp = function _onKeyUp(cm, event) {
-    var code = event.keyCode;
-    if (code >= 65 && code <= 90 || // letters
-    !event.shiftKey && code >= 48 && code <= 57 || // numbers
-    event.shiftKey && code === 189 || // underscore
-    event.shiftKey && code === 50 || // @
-    event.shiftKey && code === 57 // (
-    ) {
-        this.editor.execCommand('autocomplete');
-      }
-  };
-
-  QueryEditor.prototype._onEdit = function _onEdit() {
-    if (!this.ignoreChangeEvent) {
-      this.cachedValue = this.editor.getValue();
-      if (this.props.onEdit) {
-        this.props.onEdit(this.cachedValue);
-      }
-    }
-  };
-
-  /**
-   * Render a custom UI for CodeMirror's hint which includes additional info
-   * about the type and description for the selected context.
-   */
-
-  QueryEditor.prototype._onHasCompletion = function _onHasCompletion(cm, data) {
-    var _this2 = this;
-
-    var wrapper;
-    var information;
-
-    // When a hint result is selected, we touch the UI.
-    _codemirror2['default'].on(data, 'select', function (ctx, el) {
-      // Only the first time (usually when the hint UI is first displayed)
-      // do we create the wrapping node.
-      if (!wrapper) {
-        // Wrap the existing hint UI, so we have a place to put information.
-        var hintsUl = el.parentNode;
-        var container = hintsUl.parentNode;
-        wrapper = document.createElement('div');
-        container.appendChild(wrapper);
-
-        // CodeMirror vertically inverts the hint UI if there is not enough
-        // space below the cursor. Since this modified UI appends to the bottom
-        // of CodeMirror's existing UI, it could cover the cursor. This adjusts
-        // the positioning of the hint UI to accomodate.
-        var top = hintsUl.style.top;
-        var bottom = '';
-        var cursorTop = cm.cursorCoords().top;
-        if (parseInt(top, 10) < cursorTop) {
-          top = '';
-          bottom = window.innerHeight - cursorTop + 3 + 'px';
-        }
-
-        // Style the wrapper, remove positioning from hints. Note that usage
-        // of this option will need to specify CSS to remove some styles from
-        // the existing hint UI.
-        wrapper.className = 'CodeMirror-hints-wrapper';
-        wrapper.style.left = hintsUl.style.left;
-        wrapper.style.top = top;
-        wrapper.style.bottom = bottom;
-        hintsUl.style.left = '';
-        hintsUl.style.top = '';
-
-        // This "information" node will contain the additional info about the
-        // highlighted typeahead option.
-        information = document.createElement('div');
-        information.className = 'CodeMirror-hint-information';
-        if (bottom) {
-          wrapper.appendChild(information);
-          wrapper.appendChild(hintsUl);
-        } else {
-          wrapper.appendChild(hintsUl);
-          wrapper.appendChild(information);
-        }
-
-        // When CodeMirror attempts to remove the hint UI, we detect that it was
-        // removed from our wrapper and in turn remove the wrapper from the
-        // original container.
-        var onRemoveFn;
-        wrapper.addEventListener('DOMNodeRemoved', onRemoveFn = function (event) {
-          if (event.target === hintsUl) {
-            wrapper.removeEventListener('DOMNodeRemoved', onRemoveFn);
-            wrapper.parentNode.removeChild(wrapper);
-            wrapper = null;
-            information = null;
-            onRemoveFn = null;
-          }
-        });
-      }
-
-      // Now that the UI has been set up, add info to information.
-      var description = ctx.description ? _marked2['default'](ctx.description, { smartypants: true }) : 'Self descriptive.';
-      var type = ctx.type ? '<span class="infoType">' + String(ctx.type) + '</span>' : '';
-      information.innerHTML = '<div class="content">' + (description.slice(0, 3) === '<p>' ? '<p>' + type + description.slice(3) : type + description) + '</div>';
-
-      // Additional rendering?
-      var onHintInformationRender = _this2.props.onHintInformationRender;
-      if (onHintInformationRender) {
-        onHintInformationRender(information);
-      }
-    });
-  };
-
   QueryEditor.prototype.render = function render() {
     return _react2['default'].createElement('div', { className: 'query-editor' });
   };
@@ -1278,8 +1961,23 @@ var QueryEditor = (function (_React$Component) {
 })(_react2['default'].Component);
 
 exports.QueryEditor = QueryEditor;
+
+function renderType(type) {
+  if (type instanceof _graphqlType.GraphQLNonNull) {
+    return renderType(type.ofType) + '!';
+  }
+  if (type instanceof _graphqlType.GraphQLList) {
+    return '[' + renderType(type.ofType) + ']';
+  }
+  return '<a class="typeName">' + type.name + '</a>';
+}
+
+/**
+ * Render a custom UI for CodeMirror's hint which includes additional info
+ * about the type and description for the selected context.
+ */
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"codemirror":117,"codemirror-graphql/hint":104,"codemirror-graphql/lint":105,"codemirror-graphql/mode":106,"codemirror/addon/comment/comment":107,"codemirror/addon/edit/closebrackets":108,"codemirror/addon/edit/matchbrackets":109,"codemirror/addon/fold/brace-fold":110,"codemirror/addon/fold/foldgutter":112,"codemirror/addon/hint/show-hint":113,"codemirror/addon/lint/lint":114,"codemirror/keymap/sublime":116,"graphql":127,"marked":186}],6:[function(require,module,exports){
+},{"codemirror":116,"codemirror-graphql/hint":103,"codemirror-graphql/lint":104,"codemirror-graphql/mode":105,"codemirror/addon/comment/comment":106,"codemirror/addon/edit/closebrackets":107,"codemirror/addon/edit/matchbrackets":108,"codemirror/addon/fold/brace-fold":109,"codemirror/addon/fold/foldgutter":111,"codemirror/addon/hint/show-hint":112,"codemirror/addon/lint/lint":113,"codemirror/keymap/sublime":115,"graphql/type":138,"marked":180}],7:[function(require,module,exports){
 (function (global){
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -1304,6 +2002,10 @@ function _inherits(subClass, superClass) { if (typeof superClass !== 'function' 
 var _react = (typeof window !== "undefined" ? window['React'] : typeof global !== "undefined" ? global['React'] : null);
 
 var _react2 = _interopRequireDefault(_react);
+
+var _reactDom = (typeof window !== "undefined" ? window['ReactDOM'] : typeof global !== "undefined" ? global['ReactDOM'] : null);
+
+var _reactDom2 = _interopRequireDefault(_reactDom);
 
 var _codemirror = require('codemirror');
 
@@ -1338,7 +2040,7 @@ var ResultViewer = (function (_React$Component) {
   }
 
   ResultViewer.prototype.componentDidMount = function componentDidMount() {
-    this.viewer = _codemirror2['default'](_react2['default'].findDOMNode(this), {
+    this.viewer = _codemirror2['default'](_reactDom2['default'].findDOMNode(this), {
       value: this.props.value || '',
       readOnly: true,
       theme: 'graphiql',
@@ -1390,7 +2092,7 @@ var ResultViewer = (function (_React$Component) {
 
 exports.ResultViewer = ResultViewer;
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"codemirror":117,"codemirror/addon/fold/brace-fold":110,"codemirror/addon/fold/foldgutter":112,"codemirror/keymap/sublime":116,"codemirror/mode/javascript/javascript":118}],7:[function(require,module,exports){
+},{"codemirror":116,"codemirror/addon/fold/brace-fold":109,"codemirror/addon/fold/foldgutter":111,"codemirror/keymap/sublime":115,"codemirror/mode/javascript/javascript":117}],8:[function(require,module,exports){
 (function (global){
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -1415,6 +2117,10 @@ function _inherits(subClass, superClass) { if (typeof superClass !== 'function' 
 var _react = (typeof window !== "undefined" ? window['React'] : typeof global !== "undefined" ? global['React'] : null);
 
 var _react2 = _interopRequireDefault(_react);
+
+var _reactDom = (typeof window !== "undefined" ? window['ReactDOM'] : typeof global !== "undefined" ? global['ReactDOM'] : null);
+
+var _reactDom2 = _interopRequireDefault(_reactDom);
 
 var _codemirror = require('codemirror');
 
@@ -1457,6 +2163,8 @@ var VariableEditor = (function (_React$Component) {
   }]);
 
   function VariableEditor(props) {
+    var _this = this;
+
     _classCallCheck(this, VariableEditor);
 
     _React$Component.call(this);
@@ -1464,11 +2172,21 @@ var VariableEditor = (function (_React$Component) {
     // Keep a cached version of the value, this cache will be updated when the
     // editor is updated, which can later be used to protect the editor from
     // unnecessary updates during the update lifecycle.
+
+    this._onEdit = function () {
+      if (!_this.ignoreChangeEvent) {
+        _this.cachedValue = _this.editor.getValue();
+        if (_this.props.onEdit) {
+          _this.props.onEdit(_this.cachedValue);
+        }
+      }
+    };
+
     this.cachedValue = props.value || '';
   }
 
   VariableEditor.prototype.componentDidMount = function componentDidMount() {
-    this.editor = _codemirror2['default'](_react2['default'].findDOMNode(this), {
+    this.editor = _codemirror2['default'](_reactDom2['default'].findDOMNode(this), {
       value: this.props.value || '',
       lineNumbers: true,
       theme: 'graphiql',
@@ -1494,10 +2212,11 @@ var VariableEditor = (function (_React$Component) {
       }
     });
 
-    this.editor.on('change', this._onEdit.bind(this));
+    this.editor.on('change', this._onEdit);
   };
 
   VariableEditor.prototype.componentWillUnmount = function componentWillUnmount() {
+    this.editor.off('change', this._onEdit);
     this.editor = null;
   };
 
@@ -1513,15 +2232,6 @@ var VariableEditor = (function (_React$Component) {
     this.ignoreChangeEvent = false;
   };
 
-  VariableEditor.prototype._onEdit = function _onEdit() {
-    if (!this.ignoreChangeEvent) {
-      this.cachedValue = this.editor.getValue();
-      if (this.props.onEdit) {
-        this.props.onEdit(this.cachedValue);
-      }
-    }
-  };
-
   VariableEditor.prototype.render = function render() {
     return _react2['default'].createElement('div', { className: 'codemirrorWrap', ref: 'codemirror' });
   };
@@ -1531,7 +2241,7 @@ var VariableEditor = (function (_React$Component) {
 
 exports.VariableEditor = VariableEditor;
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../codemirror/lint/json-lint":1,"codemirror":117,"codemirror/addon/fold/brace-fold":110,"codemirror/addon/fold/foldgutter":112,"codemirror/addon/lint/lint":114,"codemirror/keymap/sublime":116,"codemirror/mode/javascript/javascript":118}],8:[function(require,module,exports){
+},{"../codemirror/lint/json-lint":1,"codemirror":116,"codemirror/addon/fold/brace-fold":109,"codemirror/addon/fold/foldgutter":111,"codemirror/addon/lint/lint":113,"codemirror/keymap/sublime":115,"codemirror/mode/javascript/javascript":117}],9:[function(require,module,exports){
 /**
  *  Copyright (c) 2015, Facebook, Inc.
  *  All rights reserved.
@@ -1544,7 +2254,45 @@ exports.VariableEditor = VariableEditor;
 'use strict';
 
 module.exports = require('./components/GraphiQL').GraphiQL;
-},{"./components/GraphiQL":4}],9:[function(require,module,exports){
+},{"./components/GraphiQL":5}],10:[function(require,module,exports){
+/**
+ *  Copyright (c) 2015, Facebook, Inc.
+ *  All rights reserved.
+ *
+ *  This source code is licensed under the license found in the
+ *  LICENSE-examples file in the root directory of this source tree.
+ */
+
+/**
+ * Utility functions to get a pixel distance from left/top of the window.
+ */
+
+"use strict";
+
+exports.__esModule = true;
+exports.getLeft = getLeft;
+exports.getTop = getTop;
+
+function getLeft(initialElem) {
+  var pt = 0;
+  var elem = initialElem;
+  while (elem.offsetParent) {
+    pt += elem.offsetLeft;
+    elem = elem.offsetParent;
+  }
+  return pt;
+}
+
+function getTop(initialElem) {
+  var pt = 0;
+  var elem = initialElem;
+  while (elem.offsetParent) {
+    pt += elem.offsetTop;
+    elem = elem.offsetParent;
+  }
+  return pt;
+}
+},{}],11:[function(require,module,exports){
 /**
  *  Copyright (c) 2015, Facebook, Inc.
  *  All rights reserved.
@@ -1576,16 +2324,20 @@ var _graphqlType = require('graphql/type');
  */
 
 function fillLeafs(schema, docString, getDefaultFieldNames) {
-  var ast;
+  var insertions = [];
+
+  if (!schema) {
+    return { insertions: insertions, result: docString };
+  }
+
+  var ast = undefined;
   try {
     ast = _graphqlLanguage.parse(docString);
   } catch (error) {
-    return docString;
+    return { insertions: insertions, result: docString };
   }
 
   var fieldNameFn = getDefaultFieldNames || defaultGetDefaultFieldNames;
-  var insertions = [];
-
   var typeInfo = new _graphqlUtilities.TypeInfo(schema);
   _graphqlLanguage.visit(ast, {
     leave: function leave(node) {
@@ -1648,13 +2400,13 @@ function defaultGetDefaultFieldNames(type) {
 // Given a GraphQL type, and a function which produces field names, recursively
 // generate a SelectionSet which includes default fields.
 function buildSelectionSet(type, getDefaultFieldNames) {
+  // Unwrap any non-null or list types.
+  var namedType = _graphqlType.getNamedType(type);
+
   // Unknown types and leaf types do not have selection sets.
   if (!type || _graphqlType.isLeafType(type)) {
     return;
   }
-
-  // Unwrap any non-null or list types.
-  var namedType = _graphqlType.getNamedType(type);
 
   // Get an array of field names to use.
   var fieldNames = getDefaultFieldNames(namedType);
@@ -1720,27 +2472,50 @@ function getIndentation(str, index) {
   }
   return str.substring(indentStart, indentEnd);
 }
-},{"graphql/language":133,"graphql/type":146,"graphql/utilities":154}],10:[function(require,module,exports){
+},{"graphql/language":128,"graphql/type":138,"graphql/utilities":147}],12:[function(require,module,exports){
+/**
+ *  Copyright (c) 2015, Facebook, Inc.
+ *  All rights reserved.
+ *
+ *  This source code is licensed under the BSD-style license found in the
+ *  LICENSE file in the root directory of this source tree. An additional grant
+ *  of patent rights can be found in the PATENTS file in the same directory.
+ */
+
+'use strict';
+
+exports.__esModule = true;
+
+var _graphqlUtilities = require('graphql/utilities');
+
+exports.introspectionQuery = _graphqlUtilities.introspectionQuery;
+
+// Some GraphQL services do not support subscriptions and fail an introspection
+// query which includes the `subscriptionType` field as the stock introspection
+// query does. This backup query removes that field.
+var introspectionQuerySansSubscriptions = '\n  query IntrospectionQuery {\n    __schema {\n      queryType { name }\n      mutationType { name }\n      types {\n        ...FullType\n      }\n      directives {\n        name\n        description\n        args {\n          ...InputValue\n        }\n        onOperation\n        onFragment\n        onField\n      }\n    }\n  }\n\n  fragment FullType on __Type {\n    kind\n    name\n    description\n    fields(includeDeprecated: true) {\n      name\n      description\n      args {\n        ...InputValue\n      }\n      type {\n        ...TypeRef\n      }\n      isDeprecated\n      deprecationReason\n    }\n    inputFields {\n      ...InputValue\n    }\n    interfaces {\n      ...TypeRef\n    }\n    enumValues(includeDeprecated: true) {\n      name\n      description\n      isDeprecated\n      deprecationReason\n    }\n    possibleTypes {\n      ...TypeRef\n    }\n  }\n\n  fragment InputValue on __InputValue {\n    name\n    description\n    type { ...TypeRef }\n    defaultValue\n  }\n\n  fragment TypeRef on __Type {\n    kind\n    name\n    ofType {\n      kind\n      name\n      ofType {\n        kind\n        name\n        ofType {\n          kind\n          name\n        }\n      }\n    }\n  }\n';
+exports.introspectionQuerySansSubscriptions = introspectionQuerySansSubscriptions;
+},{"graphql/utilities":147}],13:[function(require,module,exports){
 module.exports = { "default": require("core-js/library/fn/get-iterator"), __esModule: true };
-},{"core-js/library/fn/get-iterator":27}],11:[function(require,module,exports){
+},{"core-js/library/fn/get-iterator":31}],14:[function(require,module,exports){
 module.exports = { "default": require("core-js/library/fn/is-iterable"), __esModule: true };
-},{"core-js/library/fn/is-iterable":28}],12:[function(require,module,exports){
+},{"core-js/library/fn/is-iterable":32}],15:[function(require,module,exports){
 module.exports = { "default": require("core-js/library/fn/map"), __esModule: true };
-},{"core-js/library/fn/map":29}],13:[function(require,module,exports){
+},{"core-js/library/fn/map":33}],16:[function(require,module,exports){
+module.exports = { "default": require("core-js/library/fn/object/assign"), __esModule: true };
+},{"core-js/library/fn/object/assign":34}],17:[function(require,module,exports){
 module.exports = { "default": require("core-js/library/fn/object/create"), __esModule: true };
-},{"core-js/library/fn/object/create":30}],14:[function(require,module,exports){
+},{"core-js/library/fn/object/create":35}],18:[function(require,module,exports){
 module.exports = { "default": require("core-js/library/fn/object/define-property"), __esModule: true };
-},{"core-js/library/fn/object/define-property":31}],15:[function(require,module,exports){
+},{"core-js/library/fn/object/define-property":36}],19:[function(require,module,exports){
 module.exports = { "default": require("core-js/library/fn/object/get-own-property-descriptor"), __esModule: true };
-},{"core-js/library/fn/object/get-own-property-descriptor":32}],16:[function(require,module,exports){
+},{"core-js/library/fn/object/get-own-property-descriptor":37}],20:[function(require,module,exports){
 module.exports = { "default": require("core-js/library/fn/object/keys"), __esModule: true };
-},{"core-js/library/fn/object/keys":33}],17:[function(require,module,exports){
+},{"core-js/library/fn/object/keys":38}],21:[function(require,module,exports){
 module.exports = { "default": require("core-js/library/fn/object/set-prototype-of"), __esModule: true };
-},{"core-js/library/fn/object/set-prototype-of":34}],18:[function(require,module,exports){
-module.exports = { "default": require("core-js/library/fn/promise"), __esModule: true };
-},{"core-js/library/fn/promise":35}],19:[function(require,module,exports){
+},{"core-js/library/fn/object/set-prototype-of":39}],22:[function(require,module,exports){
 module.exports = { "default": require("core-js/library/fn/set"), __esModule: true };
-},{"core-js/library/fn/set":36}],20:[function(require,module,exports){
+},{"core-js/library/fn/set":40}],23:[function(require,module,exports){
 "use strict";
 
 exports["default"] = function (instance, Constructor) {
@@ -1750,7 +2525,7 @@ exports["default"] = function (instance, Constructor) {
 };
 
 exports.__esModule = true;
-},{}],21:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 "use strict";
 
 var _Object$defineProperty = require("babel-runtime/core-js/object/define-property")["default"];
@@ -1775,7 +2550,27 @@ exports["default"] = (function () {
 })();
 
 exports.__esModule = true;
-},{"babel-runtime/core-js/object/define-property":14}],22:[function(require,module,exports){
+},{"babel-runtime/core-js/object/define-property":18}],25:[function(require,module,exports){
+"use strict";
+
+var _Object$assign = require("babel-runtime/core-js/object/assign")["default"];
+
+exports["default"] = _Object$assign || function (target) {
+  for (var i = 1; i < arguments.length; i++) {
+    var source = arguments[i];
+
+    for (var key in source) {
+      if (Object.prototype.hasOwnProperty.call(source, key)) {
+        target[key] = source[key];
+      }
+    }
+  }
+
+  return target;
+};
+
+exports.__esModule = true;
+},{"babel-runtime/core-js/object/assign":16}],26:[function(require,module,exports){
 "use strict";
 
 var _Object$getOwnPropertyDescriptor = require("babel-runtime/core-js/object/get-own-property-descriptor")["default"];
@@ -1820,7 +2615,7 @@ exports["default"] = function get(_x, _x2, _x3) {
 };
 
 exports.__esModule = true;
-},{"babel-runtime/core-js/object/get-own-property-descriptor":15}],23:[function(require,module,exports){
+},{"babel-runtime/core-js/object/get-own-property-descriptor":19}],27:[function(require,module,exports){
 "use strict";
 
 var _Object$create = require("babel-runtime/core-js/object/create")["default"];
@@ -1844,7 +2639,7 @@ exports["default"] = function (subClass, superClass) {
 };
 
 exports.__esModule = true;
-},{"babel-runtime/core-js/object/create":13,"babel-runtime/core-js/object/set-prototype-of":17}],24:[function(require,module,exports){
+},{"babel-runtime/core-js/object/create":17,"babel-runtime/core-js/object/set-prototype-of":21}],28:[function(require,module,exports){
 "use strict";
 
 exports["default"] = function (obj) {
@@ -1854,7 +2649,7 @@ exports["default"] = function (obj) {
 };
 
 exports.__esModule = true;
-},{}],25:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 "use strict";
 
 exports["default"] = function (obj) {
@@ -1875,7 +2670,7 @@ exports["default"] = function (obj) {
 };
 
 exports.__esModule = true;
-},{}],26:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 "use strict";
 
 var _getIterator = require("babel-runtime/core-js/get-iterator")["default"];
@@ -1921,68 +2716,86 @@ exports["default"] = (function () {
 })();
 
 exports.__esModule = true;
-},{"babel-runtime/core-js/get-iterator":10,"babel-runtime/core-js/is-iterable":11}],27:[function(require,module,exports){
+},{"babel-runtime/core-js/get-iterator":13,"babel-runtime/core-js/is-iterable":14}],31:[function(require,module,exports){
 require('../modules/web.dom.iterable');
 require('../modules/es6.string.iterator');
 module.exports = require('../modules/core.get-iterator');
-},{"../modules/core.get-iterator":90,"../modules/es6.string.iterator":100,"../modules/web.dom.iterable":103}],28:[function(require,module,exports){
+},{"../modules/core.get-iterator":89,"../modules/es6.string.iterator":99,"../modules/web.dom.iterable":102}],32:[function(require,module,exports){
 require('../modules/web.dom.iterable');
 require('../modules/es6.string.iterator');
 module.exports = require('../modules/core.is-iterable');
-},{"../modules/core.is-iterable":91,"../modules/es6.string.iterator":100,"../modules/web.dom.iterable":103}],29:[function(require,module,exports){
+},{"../modules/core.is-iterable":90,"../modules/es6.string.iterator":99,"../modules/web.dom.iterable":102}],33:[function(require,module,exports){
 require('../modules/es6.object.to-string');
 require('../modules/es6.string.iterator');
 require('../modules/web.dom.iterable');
 require('../modules/es6.map');
 require('../modules/es7.map.to-json');
 module.exports = require('../modules/$.core').Map;
-},{"../modules/$.core":44,"../modules/es6.map":93,"../modules/es6.object.to-string":97,"../modules/es6.string.iterator":100,"../modules/es7.map.to-json":101,"../modules/web.dom.iterable":103}],30:[function(require,module,exports){
+},{"../modules/$.core":49,"../modules/es6.map":92,"../modules/es6.object.to-string":97,"../modules/es6.string.iterator":99,"../modules/es7.map.to-json":100,"../modules/web.dom.iterable":102}],34:[function(require,module,exports){
+require('../../modules/es6.object.assign');
+module.exports = require('../../modules/$.core').Object.assign;
+},{"../../modules/$.core":49,"../../modules/es6.object.assign":93}],35:[function(require,module,exports){
 var $ = require('../../modules/$');
 module.exports = function create(P, D){
   return $.create(P, D);
 };
-},{"../../modules/$":66}],31:[function(require,module,exports){
+},{"../../modules/$":68}],36:[function(require,module,exports){
 var $ = require('../../modules/$');
 module.exports = function defineProperty(it, key, desc){
   return $.setDesc(it, key, desc);
 };
-},{"../../modules/$":66}],32:[function(require,module,exports){
+},{"../../modules/$":68}],37:[function(require,module,exports){
 var $ = require('../../modules/$');
 require('../../modules/es6.object.get-own-property-descriptor');
 module.exports = function getOwnPropertyDescriptor(it, key){
   return $.getDesc(it, key);
 };
-},{"../../modules/$":66,"../../modules/es6.object.get-own-property-descriptor":94}],33:[function(require,module,exports){
+},{"../../modules/$":68,"../../modules/es6.object.get-own-property-descriptor":94}],38:[function(require,module,exports){
 require('../../modules/es6.object.keys');
 module.exports = require('../../modules/$.core').Object.keys;
-},{"../../modules/$.core":44,"../../modules/es6.object.keys":95}],34:[function(require,module,exports){
+},{"../../modules/$.core":49,"../../modules/es6.object.keys":95}],39:[function(require,module,exports){
 require('../../modules/es6.object.set-prototype-of');
 module.exports = require('../../modules/$.core').Object.setPrototypeOf;
-},{"../../modules/$.core":44,"../../modules/es6.object.set-prototype-of":96}],35:[function(require,module,exports){
-require('../modules/es6.object.to-string');
-require('../modules/es6.string.iterator');
-require('../modules/web.dom.iterable');
-require('../modules/es6.promise');
-module.exports = require('../modules/$.core').Promise;
-},{"../modules/$.core":44,"../modules/es6.object.to-string":97,"../modules/es6.promise":98,"../modules/es6.string.iterator":100,"../modules/web.dom.iterable":103}],36:[function(require,module,exports){
+},{"../../modules/$.core":49,"../../modules/es6.object.set-prototype-of":96}],40:[function(require,module,exports){
 require('../modules/es6.object.to-string');
 require('../modules/es6.string.iterator');
 require('../modules/web.dom.iterable');
 require('../modules/es6.set');
 require('../modules/es7.set.to-json');
 module.exports = require('../modules/$.core').Set;
-},{"../modules/$.core":44,"../modules/es6.object.to-string":97,"../modules/es6.set":99,"../modules/es6.string.iterator":100,"../modules/es7.set.to-json":102,"../modules/web.dom.iterable":103}],37:[function(require,module,exports){
+},{"../modules/$.core":49,"../modules/es6.object.to-string":97,"../modules/es6.set":98,"../modules/es6.string.iterator":99,"../modules/es7.set.to-json":101,"../modules/web.dom.iterable":102}],41:[function(require,module,exports){
 module.exports = function(it){
   if(typeof it != 'function')throw TypeError(it + ' is not a function!');
   return it;
 };
-},{}],38:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 var isObject = require('./$.is-object');
 module.exports = function(it){
   if(!isObject(it))throw TypeError(it + ' is not an object!');
   return it;
 };
-},{"./$.is-object":58}],39:[function(require,module,exports){
+},{"./$.is-object":61}],43:[function(require,module,exports){
+// 19.1.2.1 Object.assign(target, source, ...)
+var toObject = require('./$.to-object')
+  , IObject  = require('./$.iobject')
+  , enumKeys = require('./$.enum-keys');
+/* eslint-disable no-unused-vars */
+module.exports = Object.assign || function assign(target, source){
+/* eslint-enable no-unused-vars */
+  var T = toObject(target)
+    , l = arguments.length
+    , i = 1;
+  while(l > i){
+    var S      = IObject(arguments[i++])
+      , keys   = enumKeys(S)
+      , length = keys.length
+      , j      = 0
+      , key;
+    while(length > j)T[key = keys[j++]] = S[key];
+  }
+  return T;
+};
+},{"./$.enum-keys":53,"./$.iobject":59,"./$.to-object":84}],44:[function(require,module,exports){
 // getting tag from 19.1.3.6 Object.prototype.toString()
 var cof = require('./$.cof')
   , TAG = require('./$.wks')('toStringTag')
@@ -1999,13 +2812,13 @@ module.exports = function(it){
     // ES3 arguments fallback
     : (B = cof(O)) == 'Object' && typeof O.callee == 'function' ? 'Arguments' : B;
 };
-},{"./$.cof":40,"./$.wks":88}],40:[function(require,module,exports){
+},{"./$.cof":45,"./$.wks":87}],45:[function(require,module,exports){
 var toString = {}.toString;
 
 module.exports = function(it){
   return toString.call(it).slice(8, -1);
 };
-},{}],41:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 'use strict';
 var $            = require('./$')
   , hide         = require('./$.hide')
@@ -2164,7 +2977,7 @@ module.exports = {
     species(require('./$.core')[NAME]); // for wrapper
   }
 };
-},{"./$":66,"./$.core":44,"./$.ctx":45,"./$.defined":47,"./$.for-of":50,"./$.has":52,"./$.hide":53,"./$.is-object":58,"./$.iter-define":62,"./$.iter-step":64,"./$.mix":69,"./$.species":76,"./$.strict-new":77,"./$.support-desc":79,"./$.uid":86}],42:[function(require,module,exports){
+},{"./$":68,"./$.core":49,"./$.ctx":50,"./$.defined":52,"./$.for-of":55,"./$.has":57,"./$.hide":58,"./$.is-object":61,"./$.iter-define":65,"./$.iter-step":66,"./$.mix":70,"./$.species":76,"./$.strict-new":77,"./$.support-desc":79,"./$.uid":85}],47:[function(require,module,exports){
 // https://github.com/DavidBruant/Map-Set.prototype.toJSON
 var forOf   = require('./$.for-of')
   , classof = require('./$.classof');
@@ -2176,7 +2989,7 @@ module.exports = function(NAME){
     return arr;
   };
 };
-},{"./$.classof":39,"./$.for-of":50}],43:[function(require,module,exports){
+},{"./$.classof":44,"./$.for-of":55}],48:[function(require,module,exports){
 'use strict';
 var $          = require('./$')
   , $def       = require('./$.def')
@@ -2225,10 +3038,10 @@ module.exports = function(NAME, wrapper, methods, common, IS_MAP, IS_WEAK){
 
   return C;
 };
-},{"./$":66,"./$.def":46,"./$.for-of":50,"./$.global":51,"./$.hide":53,"./$.iter-buggy":59,"./$.mix":69,"./$.strict-new":77,"./$.support-desc":79,"./$.tag":80}],44:[function(require,module,exports){
+},{"./$":68,"./$.def":51,"./$.for-of":55,"./$.global":56,"./$.hide":58,"./$.iter-buggy":62,"./$.mix":70,"./$.strict-new":77,"./$.support-desc":79,"./$.tag":80}],49:[function(require,module,exports){
 var core = module.exports = {};
 if(typeof __e == 'number')__e = core; // eslint-disable-line no-undef
-},{}],45:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 // optional / simple context binding
 var aFunction = require('./$.a-function');
 module.exports = function(fn, that, length){
@@ -2248,7 +3061,7 @@ module.exports = function(fn, that, length){
       return fn.apply(that, arguments);
     };
 };
-},{"./$.a-function":37}],46:[function(require,module,exports){
+},{"./$.a-function":41}],51:[function(require,module,exports){
 var global    = require('./$.global')
   , core      = require('./$.core')
   , PROTOTYPE = 'prototype';
@@ -2296,21 +3109,28 @@ $def.P = 8;  // proto
 $def.B = 16; // bind
 $def.W = 32; // wrap
 module.exports = $def;
-},{"./$.core":44,"./$.global":51}],47:[function(require,module,exports){
+},{"./$.core":49,"./$.global":56}],52:[function(require,module,exports){
 // 7.2.1 RequireObjectCoercible(argument)
 module.exports = function(it){
   if(it == undefined)throw TypeError("Can't call method on  " + it);
   return it;
 };
-},{}],48:[function(require,module,exports){
-var isObject = require('./$.is-object')
-  , document = require('./$.global').document
-  // in old IE typeof document.createElement is 'object'
-  , is = isObject(document) && isObject(document.createElement);
+},{}],53:[function(require,module,exports){
+// all enumerable object keys, includes symbols
+var $ = require('./$');
 module.exports = function(it){
-  return is ? document.createElement(it) : {};
+  var keys       = $.getKeys(it)
+    , getSymbols = $.getSymbols;
+  if(getSymbols){
+    var symbols = getSymbols(it)
+      , isEnum  = $.isEnum
+      , i       = 0
+      , key;
+    while(symbols.length > i)if(isEnum.call(it, key = symbols[i++]))keys.push(key);
+  }
+  return keys;
 };
-},{"./$.global":51,"./$.is-object":58}],49:[function(require,module,exports){
+},{"./$":68}],54:[function(require,module,exports){
 module.exports = function(exec){
   try {
     return !!exec();
@@ -2318,7 +3138,7 @@ module.exports = function(exec){
     return true;
   }
 };
-},{}],50:[function(require,module,exports){
+},{}],55:[function(require,module,exports){
 var ctx         = require('./$.ctx')
   , call        = require('./$.iter-call')
   , isArrayIter = require('./$.is-array-iter')
@@ -2338,16 +3158,16 @@ module.exports = function(iterable, entries, fn, that){
     call(iterator, f, step.value, entries);
   }
 };
-},{"./$.an-object":38,"./$.ctx":45,"./$.is-array-iter":57,"./$.iter-call":60,"./$.to-length":84,"./core.get-iterator-method":89}],51:[function(require,module,exports){
+},{"./$.an-object":42,"./$.ctx":50,"./$.is-array-iter":60,"./$.iter-call":63,"./$.to-length":83,"./core.get-iterator-method":88}],56:[function(require,module,exports){
 var global = typeof self != 'undefined' && self.Math == Math ? self : Function('return this')();
 module.exports = global;
 if(typeof __g == 'number')__g = global; // eslint-disable-line no-undef
-},{}],52:[function(require,module,exports){
+},{}],57:[function(require,module,exports){
 var hasOwnProperty = {}.hasOwnProperty;
 module.exports = function(it, key){
   return hasOwnProperty.call(it, key);
 };
-},{}],53:[function(require,module,exports){
+},{}],58:[function(require,module,exports){
 var $          = require('./$')
   , createDesc = require('./$.property-desc');
 module.exports = require('./$.support-desc') ? function(object, key, value){
@@ -2356,47 +3176,28 @@ module.exports = require('./$.support-desc') ? function(object, key, value){
   object[key] = value;
   return object;
 };
-},{"./$":66,"./$.property-desc":71,"./$.support-desc":79}],54:[function(require,module,exports){
-module.exports = require('./$.global').document && document.documentElement;
-},{"./$.global":51}],55:[function(require,module,exports){
-// fast apply, http://jsperf.lnkit.com/fast-apply/5
-module.exports = function(fn, args, that){
-  var un = that === undefined;
-  switch(args.length){
-    case 0: return un ? fn()
-                      : fn.call(that);
-    case 1: return un ? fn(args[0])
-                      : fn.call(that, args[0]);
-    case 2: return un ? fn(args[0], args[1])
-                      : fn.call(that, args[0], args[1]);
-    case 3: return un ? fn(args[0], args[1], args[2])
-                      : fn.call(that, args[0], args[1], args[2]);
-    case 4: return un ? fn(args[0], args[1], args[2], args[3])
-                      : fn.call(that, args[0], args[1], args[2], args[3]);
-  } return              fn.apply(that, args);
-};
-},{}],56:[function(require,module,exports){
+},{"./$":68,"./$.property-desc":72,"./$.support-desc":79}],59:[function(require,module,exports){
 // indexed object, fallback for non-array-like ES3 strings
 var cof = require('./$.cof');
 module.exports = 0 in Object('z') ? Object : function(it){
   return cof(it) == 'String' ? it.split('') : Object(it);
 };
-},{"./$.cof":40}],57:[function(require,module,exports){
+},{"./$.cof":45}],60:[function(require,module,exports){
 // check on default Array iterator
 var Iterators = require('./$.iterators')
   , ITERATOR  = require('./$.wks')('iterator');
 module.exports = function(it){
   return (Iterators.Array || Array.prototype[ITERATOR]) === it;
 };
-},{"./$.iterators":65,"./$.wks":88}],58:[function(require,module,exports){
+},{"./$.iterators":67,"./$.wks":87}],61:[function(require,module,exports){
 // http://jsperf.com/core-js-isobject
 module.exports = function(it){
   return it !== null && (typeof it == 'object' || typeof it == 'function');
 };
-},{}],59:[function(require,module,exports){
+},{}],62:[function(require,module,exports){
 // Safari has buggy iterators w/o `next`
 module.exports = 'keys' in [] && !('next' in [].keys());
-},{}],60:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 // call something on iterator step with safe closing on error
 var anObject = require('./$.an-object');
 module.exports = function(iterator, fn, value, entries){
@@ -2409,7 +3210,7 @@ module.exports = function(iterator, fn, value, entries){
     throw e;
   }
 };
-},{"./$.an-object":38}],61:[function(require,module,exports){
+},{"./$.an-object":42}],64:[function(require,module,exports){
 'use strict';
 var $ = require('./$')
   , IteratorPrototype = {};
@@ -2421,7 +3222,7 @@ module.exports = function(Constructor, NAME, next){
   Constructor.prototype = $.create(IteratorPrototype, {next: require('./$.property-desc')(1,next)});
   require('./$.tag')(Constructor, NAME + ' Iterator');
 };
-},{"./$":66,"./$.hide":53,"./$.property-desc":71,"./$.tag":80,"./$.wks":88}],62:[function(require,module,exports){
+},{"./$":68,"./$.hide":58,"./$.property-desc":72,"./$.tag":80,"./$.wks":87}],65:[function(require,module,exports){
 'use strict';
 var LIBRARY         = require('./$.library')
   , $def            = require('./$.def')
@@ -2471,33 +3272,13 @@ module.exports = function(Base, NAME, Constructor, next, DEFAULT, IS_SET, FORCE)
     } else $def($def.P + $def.F * require('./$.iter-buggy'), NAME, methods);
   }
 };
-},{"./$":66,"./$.def":46,"./$.has":52,"./$.hide":53,"./$.iter-buggy":59,"./$.iter-create":61,"./$.iterators":65,"./$.library":67,"./$.redef":72,"./$.tag":80,"./$.wks":88}],63:[function(require,module,exports){
-var SYMBOL_ITERATOR = require('./$.wks')('iterator')
-  , SAFE_CLOSING    = false;
-try {
-  var riter = [7][SYMBOL_ITERATOR]();
-  riter['return'] = function(){ SAFE_CLOSING = true; };
-  Array.from(riter, function(){ throw 2; });
-} catch(e){ /* empty */ }
-module.exports = function(exec){
-  if(!SAFE_CLOSING)return false;
-  var safe = false;
-  try {
-    var arr  = [7]
-      , iter = arr[SYMBOL_ITERATOR]();
-    iter.next = function(){ safe = true; };
-    arr[SYMBOL_ITERATOR] = function(){ return iter; };
-    exec(arr);
-  } catch(e){ /* empty */ }
-  return safe;
-};
-},{"./$.wks":88}],64:[function(require,module,exports){
+},{"./$":68,"./$.def":51,"./$.has":57,"./$.hide":58,"./$.iter-buggy":62,"./$.iter-create":64,"./$.iterators":67,"./$.library":69,"./$.redef":73,"./$.tag":80,"./$.wks":87}],66:[function(require,module,exports){
 module.exports = function(done, value){
   return {value: value, done: !!done};
 };
-},{}],65:[function(require,module,exports){
+},{}],67:[function(require,module,exports){
 module.exports = {};
-},{}],66:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
 var $Object = Object;
 module.exports = {
   create:     $Object.create,
@@ -2511,63 +3292,15 @@ module.exports = {
   getSymbols: $Object.getOwnPropertySymbols,
   each:       [].forEach
 };
-},{}],67:[function(require,module,exports){
+},{}],69:[function(require,module,exports){
 module.exports = true;
-},{}],68:[function(require,module,exports){
-var global    = require('./$.global')
-  , macrotask = require('./$.task').set
-  , Observer  = global.MutationObserver || global.WebKitMutationObserver
-  , process   = global.process
-  , head, last, notify;
-
-function flush(){
-  while(head){
-    head.fn.call(); // <- currently we use it only for Promise - try / catch not required
-    head = head.next;
-  } last = undefined;
-}
-
-// Node.js
-if(require('./$.cof')(process) == 'process'){
-  notify = function(){
-    process.nextTick(flush);
-  };
-// browsers with MutationObserver
-} else if(Observer){
-  var toggle = 1
-    , node   = document.createTextNode('');
-  new Observer(flush).observe(node, {characterData: true}); // eslint-disable-line no-new
-  notify = function(){
-    node.data = toggle = -toggle;
-  };
-// for other environments - macrotask based on:
-// - setImmediate
-// - MessageChannel
-// - window.postMessag
-// - onreadystatechange
-// - setTimeout
-} else {
-  notify = function(){
-    // strange IE + webpack dev server bug - use .call(global)
-    macrotask.call(global, flush);
-  };
-}
-
-module.exports = function asap(fn){
-  var task = {fn: fn, next: undefined};
-  if(last)last.next = task;
-  if(!head){
-    head = task;
-    notify();
-  } last = task;
-};
-},{"./$.cof":40,"./$.global":51,"./$.task":81}],69:[function(require,module,exports){
+},{}],70:[function(require,module,exports){
 var $redef = require('./$.redef');
 module.exports = function(target, src){
   for(var key in src)$redef(target, key, src[key]);
   return target;
 };
-},{"./$.redef":72}],70:[function(require,module,exports){
+},{"./$.redef":73}],71:[function(require,module,exports){
 // most Object methods by ES6 should accept primitives
 module.exports = function(KEY, exec){
   var $def = require('./$.def')
@@ -2576,7 +3309,7 @@ module.exports = function(KEY, exec){
   exp[KEY] = exec(fn);
   $def($def.S + $def.F * require('./$.fails')(function(){ fn(1); }), 'Object', exp);
 };
-},{"./$.core":44,"./$.def":46,"./$.fails":49}],71:[function(require,module,exports){
+},{"./$.core":49,"./$.def":51,"./$.fails":54}],72:[function(require,module,exports){
 module.exports = function(bitmap, value){
   return {
     enumerable  : !(bitmap & 1),
@@ -2585,13 +3318,9 @@ module.exports = function(bitmap, value){
     value       : value
   };
 };
-},{}],72:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 module.exports = require('./$.hide');
-},{"./$.hide":53}],73:[function(require,module,exports){
-module.exports = Object.is || function is(x, y){
-  return x === y ? x !== 0 || 1 / x === 1 / y : x != x && y != y;
-};
-},{}],74:[function(require,module,exports){
+},{"./$.hide":58}],74:[function(require,module,exports){
 // Works with __proto__ only. Old v8 can't work with null proto objects.
 /* eslint-disable no-proto */
 var getDesc  = require('./$').getDesc
@@ -2618,14 +3347,14 @@ module.exports = {
     : undefined),
   check: check
 };
-},{"./$":66,"./$.an-object":38,"./$.ctx":45,"./$.is-object":58}],75:[function(require,module,exports){
+},{"./$":68,"./$.an-object":42,"./$.ctx":50,"./$.is-object":61}],75:[function(require,module,exports){
 var global = require('./$.global')
   , SHARED = '__core-js_shared__'
   , store  = global[SHARED] || (global[SHARED] = {});
 module.exports = function(key){
   return store[key] || (store[key] = {});
 };
-},{"./$.global":51}],76:[function(require,module,exports){
+},{"./$.global":56}],76:[function(require,module,exports){
 'use strict';
 var $       = require('./$')
   , SPECIES = require('./$.wks')('species');
@@ -2635,7 +3364,7 @@ module.exports = function(C){
     get: function(){ return this; }
   });
 };
-},{"./$":66,"./$.support-desc":79,"./$.wks":88}],77:[function(require,module,exports){
+},{"./$":68,"./$.support-desc":79,"./$.wks":87}],77:[function(require,module,exports){
 module.exports = function(it, Constructor, name){
   if(!(it instanceof Constructor))throw TypeError(name + ": use the 'new' operator!");
   return it;
@@ -2659,12 +3388,12 @@ module.exports = function(TO_STRING){
         : TO_STRING ? s.slice(i, i + 2) : (a - 0xd800 << 10) + (b - 0xdc00) + 0x10000;
   };
 };
-},{"./$.defined":47,"./$.to-integer":82}],79:[function(require,module,exports){
+},{"./$.defined":52,"./$.to-integer":81}],79:[function(require,module,exports){
 // Thank's IE8 for his funny defineProperty
 module.exports = !require('./$.fails')(function(){
   return Object.defineProperty({}, 'a', {get: function(){ return 7; }}).a != 7;
 });
-},{"./$.fails":49}],80:[function(require,module,exports){
+},{"./$.fails":54}],80:[function(require,module,exports){
 var has  = require('./$.has')
   , hide = require('./$.hide')
   , TAG  = require('./$.wks')('toStringTag');
@@ -2672,133 +3401,56 @@ var has  = require('./$.has')
 module.exports = function(it, tag, stat){
   if(it && !has(it = stat ? it : it.prototype, TAG))hide(it, TAG, tag);
 };
-},{"./$.has":52,"./$.hide":53,"./$.wks":88}],81:[function(require,module,exports){
-'use strict';
-var ctx                = require('./$.ctx')
-  , invoke             = require('./$.invoke')
-  , html               = require('./$.html')
-  , cel                = require('./$.dom-create')
-  , global             = require('./$.global')
-  , process            = global.process
-  , setTask            = global.setImmediate
-  , clearTask          = global.clearImmediate
-  , MessageChannel     = global.MessageChannel
-  , counter            = 0
-  , queue              = {}
-  , ONREADYSTATECHANGE = 'onreadystatechange'
-  , defer, channel, port;
-var run = function(){
-  var id = +this;
-  if(queue.hasOwnProperty(id)){
-    var fn = queue[id];
-    delete queue[id];
-    fn();
-  }
-};
-var listner = function(event){
-  run.call(event.data);
-};
-// Node.js 0.9+ & IE10+ has setImmediate, otherwise:
-if(!setTask || !clearTask){
-  setTask = function setImmediate(fn){
-    var args = [], i = 1;
-    while(arguments.length > i)args.push(arguments[i++]);
-    queue[++counter] = function(){
-      invoke(typeof fn == 'function' ? fn : Function(fn), args);
-    };
-    defer(counter);
-    return counter;
-  };
-  clearTask = function clearImmediate(id){
-    delete queue[id];
-  };
-  // Node.js 0.8-
-  if(require('./$.cof')(process) == 'process'){
-    defer = function(id){
-      process.nextTick(ctx(run, id, 1));
-    };
-  // Browsers with MessageChannel, includes WebWorkers
-  } else if(MessageChannel){
-    channel = new MessageChannel;
-    port    = channel.port2;
-    channel.port1.onmessage = listner;
-    defer = ctx(port.postMessage, port, 1);
-  // Browsers with postMessage, skip WebWorkers
-  // IE8 has postMessage, but it's sync & typeof its postMessage is 'object'
-  } else if(global.addEventListener && typeof postMessage == 'function' && !global.importScript){
-    defer = function(id){
-      global.postMessage(id + '', '*');
-    };
-    global.addEventListener('message', listner, false);
-  // IE8-
-  } else if(ONREADYSTATECHANGE in cel('script')){
-    defer = function(id){
-      html.appendChild(cel('script'))[ONREADYSTATECHANGE] = function(){
-        html.removeChild(this);
-        run.call(id);
-      };
-    };
-  // Rest old browsers
-  } else {
-    defer = function(id){
-      setTimeout(ctx(run, id, 1), 0);
-    };
-  }
-}
-module.exports = {
-  set:   setTask,
-  clear: clearTask
-};
-},{"./$.cof":40,"./$.ctx":45,"./$.dom-create":48,"./$.global":51,"./$.html":54,"./$.invoke":55}],82:[function(require,module,exports){
+},{"./$.has":57,"./$.hide":58,"./$.wks":87}],81:[function(require,module,exports){
 // 7.1.4 ToInteger
 var ceil  = Math.ceil
   , floor = Math.floor;
 module.exports = function(it){
   return isNaN(it = +it) ? 0 : (it > 0 ? floor : ceil)(it);
 };
-},{}],83:[function(require,module,exports){
+},{}],82:[function(require,module,exports){
 // to indexed object, toObject with fallback for non-array-like ES3 strings
 var IObject = require('./$.iobject')
   , defined = require('./$.defined');
 module.exports = function(it){
   return IObject(defined(it));
 };
-},{"./$.defined":47,"./$.iobject":56}],84:[function(require,module,exports){
+},{"./$.defined":52,"./$.iobject":59}],83:[function(require,module,exports){
 // 7.1.15 ToLength
 var toInteger = require('./$.to-integer')
   , min       = Math.min;
 module.exports = function(it){
   return it > 0 ? min(toInteger(it), 0x1fffffffffffff) : 0; // pow(2, 53) - 1 == 9007199254740991
 };
-},{"./$.to-integer":82}],85:[function(require,module,exports){
+},{"./$.to-integer":81}],84:[function(require,module,exports){
 // 7.1.13 ToObject(argument)
 var defined = require('./$.defined');
 module.exports = function(it){
   return Object(defined(it));
 };
-},{"./$.defined":47}],86:[function(require,module,exports){
+},{"./$.defined":52}],85:[function(require,module,exports){
 var id = 0
   , px = Math.random();
 module.exports = function(key){
   return 'Symbol('.concat(key === undefined ? '' : key, ')_', (++id + px).toString(36));
 };
-},{}],87:[function(require,module,exports){
+},{}],86:[function(require,module,exports){
 module.exports = function(){ /* empty */ };
-},{}],88:[function(require,module,exports){
+},{}],87:[function(require,module,exports){
 var store  = require('./$.shared')('wks')
   , Symbol = require('./$.global').Symbol;
 module.exports = function(name){
   return store[name] || (store[name] =
     Symbol && Symbol[name] || (Symbol || require('./$.uid'))('Symbol.' + name));
 };
-},{"./$.global":51,"./$.shared":75,"./$.uid":86}],89:[function(require,module,exports){
+},{"./$.global":56,"./$.shared":75,"./$.uid":85}],88:[function(require,module,exports){
 var classof   = require('./$.classof')
   , ITERATOR  = require('./$.wks')('iterator')
   , Iterators = require('./$.iterators');
 module.exports = require('./$.core').getIteratorMethod = function(it){
   if(it != undefined)return it[ITERATOR] || it['@@iterator'] || Iterators[classof(it)];
 };
-},{"./$.classof":39,"./$.core":44,"./$.iterators":65,"./$.wks":88}],90:[function(require,module,exports){
+},{"./$.classof":44,"./$.core":49,"./$.iterators":67,"./$.wks":87}],89:[function(require,module,exports){
 var anObject = require('./$.an-object')
   , get      = require('./core.get-iterator-method');
 module.exports = require('./$.core').getIterator = function(it){
@@ -2806,7 +3458,7 @@ module.exports = require('./$.core').getIterator = function(it){
   if(typeof iterFn != 'function')throw TypeError(it + ' is not iterable!');
   return anObject(iterFn.call(it));
 };
-},{"./$.an-object":38,"./$.core":44,"./core.get-iterator-method":89}],91:[function(require,module,exports){
+},{"./$.an-object":42,"./$.core":49,"./core.get-iterator-method":88}],90:[function(require,module,exports){
 var classof   = require('./$.classof')
   , ITERATOR  = require('./$.wks')('iterator')
   , Iterators = require('./$.iterators');
@@ -2814,7 +3466,7 @@ module.exports = require('./$.core').isIterable = function(it){
   var O = Object(it);
   return ITERATOR in O || '@@iterator' in O || Iterators.hasOwnProperty(classof(O));
 };
-},{"./$.classof":39,"./$.core":44,"./$.iterators":65,"./$.wks":88}],92:[function(require,module,exports){
+},{"./$.classof":44,"./$.core":49,"./$.iterators":67,"./$.wks":87}],91:[function(require,module,exports){
 'use strict';
 var setUnscope = require('./$.unscope')
   , step       = require('./$.iter-step')
@@ -2849,7 +3501,7 @@ Iterators.Arguments = Iterators.Array;
 setUnscope('keys');
 setUnscope('values');
 setUnscope('entries');
-},{"./$.iter-define":62,"./$.iter-step":64,"./$.iterators":65,"./$.to-iobject":83,"./$.unscope":87}],93:[function(require,module,exports){
+},{"./$.iter-define":65,"./$.iter-step":66,"./$.iterators":67,"./$.to-iobject":82,"./$.unscope":86}],92:[function(require,module,exports){
 'use strict';
 var strong = require('./$.collection-strong');
 
@@ -2867,7 +3519,11 @@ require('./$.collection')('Map', function(get){
     return strong.def(this, key === 0 ? 0 : key, value);
   }
 }, strong, true);
-},{"./$.collection":43,"./$.collection-strong":41}],94:[function(require,module,exports){
+},{"./$.collection":48,"./$.collection-strong":46}],93:[function(require,module,exports){
+// 19.1.3.1 Object.assign(target, source)
+var $def = require('./$.def');
+$def($def.S, 'Object', {assign: require('./$.assign')});
+},{"./$.assign":43,"./$.def":51}],94:[function(require,module,exports){
 // 19.1.2.6 Object.getOwnPropertyDescriptor(O, P)
 var toIObject = require('./$.to-iobject');
 
@@ -2876,7 +3532,7 @@ require('./$.object-sap')('getOwnPropertyDescriptor', function($getOwnPropertyDe
     return $getOwnPropertyDescriptor(toIObject(it), key);
   };
 });
-},{"./$.object-sap":70,"./$.to-iobject":83}],95:[function(require,module,exports){
+},{"./$.object-sap":71,"./$.to-iobject":82}],95:[function(require,module,exports){
 // 19.1.2.14 Object.keys(O)
 var toObject = require('./$.to-object');
 
@@ -2885,274 +3541,13 @@ require('./$.object-sap')('keys', function($keys){
     return $keys(toObject(it));
   };
 });
-},{"./$.object-sap":70,"./$.to-object":85}],96:[function(require,module,exports){
+},{"./$.object-sap":71,"./$.to-object":84}],96:[function(require,module,exports){
 // 19.1.3.19 Object.setPrototypeOf(O, proto)
 var $def = require('./$.def');
 $def($def.S, 'Object', {setPrototypeOf: require('./$.set-proto').set});
-},{"./$.def":46,"./$.set-proto":74}],97:[function(require,module,exports){
+},{"./$.def":51,"./$.set-proto":74}],97:[function(require,module,exports){
 
 },{}],98:[function(require,module,exports){
-'use strict';
-var $          = require('./$')
-  , LIBRARY    = require('./$.library')
-  , global     = require('./$.global')
-  , ctx        = require('./$.ctx')
-  , classof    = require('./$.classof')
-  , $def       = require('./$.def')
-  , isObject   = require('./$.is-object')
-  , anObject   = require('./$.an-object')
-  , aFunction  = require('./$.a-function')
-  , strictNew  = require('./$.strict-new')
-  , forOf      = require('./$.for-of')
-  , setProto   = require('./$.set-proto').set
-  , same       = require('./$.same')
-  , species    = require('./$.species')
-  , SPECIES    = require('./$.wks')('species')
-  , RECORD     = require('./$.uid')('record')
-  , asap       = require('./$.microtask')
-  , PROMISE    = 'Promise'
-  , process    = global.process
-  , isNode     = classof(process) == 'process'
-  , P          = global[PROMISE]
-  , Wrapper;
-
-var testResolve = function(sub){
-  var test = new P(function(){});
-  if(sub)test.constructor = Object;
-  return P.resolve(test) === test;
-};
-
-var useNative = function(){
-  var works = false;
-  function P2(x){
-    var self = new P(x);
-    setProto(self, P2.prototype);
-    return self;
-  }
-  try {
-    works = P && P.resolve && testResolve();
-    setProto(P2, P);
-    P2.prototype = $.create(P.prototype, {constructor: {value: P2}});
-    // actual Firefox has broken subclass support, test that
-    if(!(P2.resolve(5).then(function(){}) instanceof P2)){
-      works = false;
-    }
-    // actual V8 bug, https://code.google.com/p/v8/issues/detail?id=4162
-    if(works && require('./$.support-desc')){
-      var thenableThenGotten = false;
-      P.resolve($.setDesc({}, 'then', {
-        get: function(){ thenableThenGotten = true; }
-      }));
-      works = thenableThenGotten;
-    }
-  } catch(e){ works = false; }
-  return works;
-}();
-
-// helpers
-var isPromise = function(it){
-  return isObject(it) && (useNative ? classof(it) == 'Promise' : RECORD in it);
-};
-var sameConstructor = function(a, b){
-  // library wrapper special case
-  if(LIBRARY && a === P && b === Wrapper)return true;
-  return same(a, b);
-};
-var getConstructor = function(C){
-  var S = anObject(C)[SPECIES];
-  return S != undefined ? S : C;
-};
-var isThenable = function(it){
-  var then;
-  return isObject(it) && typeof (then = it.then) == 'function' ? then : false;
-};
-var notify = function(record, isReject){
-  if(record.n)return;
-  record.n = true;
-  var chain = record.c;
-  asap(function(){
-    var value = record.v
-      , ok    = record.s == 1
-      , i     = 0;
-    var run = function(react){
-      var cb = ok ? react.ok : react.fail
-        , ret, then;
-      try {
-        if(cb){
-          if(!ok)record.h = true;
-          ret = cb === true ? value : cb(value);
-          if(ret === react.P){
-            react.rej(TypeError('Promise-chain cycle'));
-          } else if(then = isThenable(ret)){
-            then.call(ret, react.res, react.rej);
-          } else react.res(ret);
-        } else react.rej(value);
-      } catch(err){
-        react.rej(err);
-      }
-    };
-    while(chain.length > i)run(chain[i++]); // variable length - can't use forEach
-    chain.length = 0;
-    record.n = false;
-    if(isReject)setTimeout(function(){
-      asap(function(){
-        if(isUnhandled(record.p)){
-          if(isNode){
-            process.emit('unhandledRejection', value, record.p);
-          } else if(global.console && console.error){
-            console.error('Unhandled promise rejection', value);
-          }
-        }
-        record.a = undefined;
-      });
-    }, 1);
-  });
-};
-var isUnhandled = function(promise){
-  var record = promise[RECORD]
-    , chain  = record.a || record.c
-    , i      = 0
-    , react;
-  if(record.h)return false;
-  while(chain.length > i){
-    react = chain[i++];
-    if(react.fail || !isUnhandled(react.P))return false;
-  } return true;
-};
-var $reject = function(value){
-  var record = this;
-  if(record.d)return;
-  record.d = true;
-  record = record.r || record; // unwrap
-  record.v = value;
-  record.s = 2;
-  record.a = record.c.slice();
-  notify(record, true);
-};
-var $resolve = function(value){
-  var record = this
-    , then;
-  if(record.d)return;
-  record.d = true;
-  record = record.r || record; // unwrap
-  try {
-    if(then = isThenable(value)){
-      asap(function(){
-        var wrapper = {r: record, d: false}; // wrap
-        try {
-          then.call(value, ctx($resolve, wrapper, 1), ctx($reject, wrapper, 1));
-        } catch(e){
-          $reject.call(wrapper, e);
-        }
-      });
-    } else {
-      record.v = value;
-      record.s = 1;
-      notify(record, false);
-    }
-  } catch(e){
-    $reject.call({r: record, d: false}, e); // wrap
-  }
-};
-
-// constructor polyfill
-if(!useNative){
-  // 25.4.3.1 Promise(executor)
-  P = function Promise(executor){
-    aFunction(executor);
-    var record = {
-      p: strictNew(this, P, PROMISE),         // <- promise
-      c: [],                                  // <- awaiting reactions
-      a: undefined,                           // <- checked in isUnhandled reactions
-      s: 0,                                   // <- state
-      d: false,                               // <- done
-      v: undefined,                           // <- value
-      h: false,                               // <- handled rejection
-      n: false                                // <- notify
-    };
-    this[RECORD] = record;
-    try {
-      executor(ctx($resolve, record, 1), ctx($reject, record, 1));
-    } catch(err){
-      $reject.call(record, err);
-    }
-  };
-  require('./$.mix')(P.prototype, {
-    // 25.4.5.3 Promise.prototype.then(onFulfilled, onRejected)
-    then: function then(onFulfilled, onRejected){
-      var S = anObject(anObject(this).constructor)[SPECIES];
-      var react = {
-        ok:   typeof onFulfilled == 'function' ? onFulfilled : true,
-        fail: typeof onRejected == 'function'  ? onRejected  : false
-      };
-      var promise = react.P = new (S != undefined ? S : P)(function(res, rej){
-        react.res = aFunction(res);
-        react.rej = aFunction(rej);
-      });
-      var record = this[RECORD];
-      record.c.push(react);
-      if(record.a)record.a.push(react);
-      if(record.s)notify(record, false);
-      return promise;
-    },
-    // 25.4.5.1 Promise.prototype.catch(onRejected)
-    'catch': function(onRejected){
-      return this.then(undefined, onRejected);
-    }
-  });
-}
-
-// export
-$def($def.G + $def.W + $def.F * !useNative, {Promise: P});
-require('./$.tag')(P, PROMISE);
-species(P);
-species(Wrapper = require('./$.core')[PROMISE]);
-
-// statics
-$def($def.S + $def.F * !useNative, PROMISE, {
-  // 25.4.4.5 Promise.reject(r)
-  reject: function reject(r){
-    return new this(function(res, rej){ rej(r); });
-  }
-});
-$def($def.S + $def.F * (!useNative || testResolve(true)), PROMISE, {
-  // 25.4.4.6 Promise.resolve(x)
-  resolve: function resolve(x){
-    return isPromise(x) && sameConstructor(x.constructor, this)
-      ? x : new this(function(res){ res(x); });
-  }
-});
-$def($def.S + $def.F * !(useNative && require('./$.iter-detect')(function(iter){
-  P.all(iter)['catch'](function(){});
-})), PROMISE, {
-  // 25.4.4.1 Promise.all(iterable)
-  all: function all(iterable){
-    var C      = getConstructor(this)
-      , values = [];
-    return new C(function(res, rej){
-      forOf(iterable, false, values.push, values);
-      var remaining = values.length
-        , results   = Array(remaining);
-      if(remaining)$.each.call(values, function(promise, index){
-        C.resolve(promise).then(function(value){
-          results[index] = value;
-          --remaining || res(results);
-        }, rej);
-      });
-      else res(results);
-    });
-  },
-  // 25.4.4.4 Promise.race(iterable)
-  race: function race(iterable){
-    var C = getConstructor(this);
-    return new C(function(res, rej){
-      forOf(iterable, false, function(promise){
-        C.resolve(promise).then(res, rej);
-      });
-    });
-  }
-});
-},{"./$":66,"./$.a-function":37,"./$.an-object":38,"./$.classof":39,"./$.core":44,"./$.ctx":45,"./$.def":46,"./$.for-of":50,"./$.global":51,"./$.is-object":58,"./$.iter-detect":63,"./$.library":67,"./$.microtask":68,"./$.mix":69,"./$.same":73,"./$.set-proto":74,"./$.species":76,"./$.strict-new":77,"./$.support-desc":79,"./$.tag":80,"./$.uid":86,"./$.wks":88}],99:[function(require,module,exports){
 'use strict';
 var strong = require('./$.collection-strong');
 
@@ -3165,7 +3560,7 @@ require('./$.collection')('Set', function(get){
     return strong.def(this, value = value === 0 ? 0 : value, value);
   }
 }, strong);
-},{"./$.collection":43,"./$.collection-strong":41}],100:[function(require,module,exports){
+},{"./$.collection":48,"./$.collection-strong":46}],99:[function(require,module,exports){
 'use strict';
 var $at  = require('./$.string-at')(true);
 
@@ -3183,21 +3578,21 @@ require('./$.iter-define')(String, 'String', function(iterated){
   this._i += point.length;
   return {value: point, done: false};
 });
-},{"./$.iter-define":62,"./$.string-at":78}],101:[function(require,module,exports){
+},{"./$.iter-define":65,"./$.string-at":78}],100:[function(require,module,exports){
 // https://github.com/DavidBruant/Map-Set.prototype.toJSON
 var $def  = require('./$.def');
 
 $def($def.P, 'Map', {toJSON: require('./$.collection-to-json')('Map')});
-},{"./$.collection-to-json":42,"./$.def":46}],102:[function(require,module,exports){
+},{"./$.collection-to-json":47,"./$.def":51}],101:[function(require,module,exports){
 // https://github.com/DavidBruant/Map-Set.prototype.toJSON
 var $def  = require('./$.def');
 
 $def($def.P, 'Set', {toJSON: require('./$.collection-to-json')('Set')});
-},{"./$.collection-to-json":42,"./$.def":46}],103:[function(require,module,exports){
+},{"./$.collection-to-json":47,"./$.def":51}],102:[function(require,module,exports){
 require('./es6.array.iterator');
 var Iterators = require('./$.iterators');
 Iterators.NodeList = Iterators.HTMLCollection = Iterators.Array;
-},{"./$.iterators":65,"./es6.array.iterator":92}],104:[function(require,module,exports){
+},{"./$.iterators":67,"./es6.array.iterator":91}],103:[function(require,module,exports){
 /**
  *  Copyright (c) 2015, Facebook, Inc.
  *  All rights reserved.
@@ -3256,7 +3651,7 @@ _codemirror2['default'].registerHelper('hint', 'graphql', function (editor, opti
 
   // Definition kinds
   if (kind === 'Document') {
-    return hintList(editor, options, cur, token, [{ text: 'query' }, { text: 'mutation' }, { text: 'fragment' }, { text: '{' }]);
+    return hintList(editor, options, cur, token, [{ text: 'query' }, { text: 'mutation' }, { text: 'subscription' }, { text: 'fragment' }, { text: '{' }]);
   }
 
   // Field names
@@ -3338,7 +3733,7 @@ _codemirror2['default'].registerHelper('hint', 'graphql', function (editor, opti
   }
 
   // Fragment type conditions
-  if (kind === 'FragmentDefinition' && step === 3 || kind === 'InlineFragment' && step === 2 || kind === 'NamedType' && (state.prevState.kind === 'FragmentDefinition' || state.prevState.kind === 'InlineFragment')) {
+  if (kind === 'TypeCondition' && step === 1 || kind === 'NamedType' && state.prevState.kind === 'TypeCondition') {
     var possibleTypes;
     if (typeInfo.parentType) {
       possibleTypes = _graphqlType.isAbstractType(typeInfo.parentType) ? typeInfo.parentType.getPossibleTypes() : [typeInfo.parentType];
@@ -3373,7 +3768,7 @@ _codemirror2['default'].registerHelper('hint', 'graphql', function (editor, opti
   // Directive names
   if (kind === 'Directive') {
     var directives = schema.getDirectives().filter(function (directive) {
-      return directive.onField && state.prevState.kind === 'Field' || directive.onFragment && (state.prevState.kind === 'FragmentDefinition' || state.prevState.kind === 'InlineFragment' || state.prevState.kind === 'FragmentSpread') || directive.onOperation && (state.prevState.kind === 'Query' || state.prevState.kind === 'Mutation');
+      return directive.onField && state.prevState.kind === 'Field' || directive.onFragment && (state.prevState.kind === 'FragmentDefinition' || state.prevState.kind === 'InlineFragment' || state.prevState.kind === 'FragmentSpread') || directive.onOperation && (state.prevState.kind === 'Query' || state.prevState.kind === 'Mutation' || state.prevState.kind === 'Subscription');
     });
     return hintList(editor, options, cur, token, directives.map(function (directive) {
       return {
@@ -3405,6 +3800,9 @@ function getTypeInfo(schema, tokenState) {
         break;
       case 'Mutation':
         info.type = schema.getMutationType();
+        break;
+      case 'Subscription':
+        info.type = schema.getSubscriptionType();
         break;
       case 'InlineFragment':
       case 'FragmentDefinition':
@@ -3581,7 +3979,7 @@ function lexicalDistance(a, b) {
 
   return d[aLength][bLength];
 }
-},{"codemirror":117,"graphql/type":146,"graphql/type/introspection":147}],105:[function(require,module,exports){
+},{"codemirror":116,"graphql/type":138,"graphql/type/introspection":139}],104:[function(require,module,exports){
 /**
  *  Copyright (c) 2015, Facebook, Inc.
  *  All rights reserved.
@@ -3654,7 +4052,7 @@ function errorAnnotations(editor, error) {
 function mapCat(array, mapper) {
   return Array.prototype.concat.apply([], array.map(mapper));
 }
-},{"codemirror":117,"graphql/language":133,"graphql/validation":161}],106:[function(require,module,exports){
+},{"codemirror":116,"graphql/language":128,"graphql/validation":154}],105:[function(require,module,exports){
 /**
  *  Copyright (c) 2015, Facebook, Inc.
  *  All rights reserved.
@@ -3942,7 +4340,7 @@ function name(style) {
   };
 }
 
-// A Name Token which will decorate the state with a `type`
+// A Name Token which will decorate the previous state with a `type`
 function type(style) {
   return {
     style: style,
@@ -3950,7 +4348,7 @@ function type(style) {
       return token.kind === 'Name';
     },
     update: function update(state, token) {
-      state.type = token.value;
+      state.prevState.type = token.value;
     }
   };
 }
@@ -3985,6 +4383,8 @@ var ParseRules = {
         return 'Query';
       case 'mutation':
         return 'Mutation';
+      case 'subscription':
+        return 'Subscription';
       case 'fragment':
         return 'FragmentDefinition';
       case '{':
@@ -3992,9 +4392,10 @@ var ParseRules = {
     }
   },
   // Note: instead of "Operation", these rules have been separated out.
-  Query: [word('query'), name('def'), opt('VariableDefinitions'), list('Directive'), 'SelectionSet'],
+  Query: [word('query'), opt(name('def')), opt('VariableDefinitions'), list('Directive'), 'SelectionSet'],
   ShortQuery: ['SelectionSet'],
-  Mutation: [word('mutation'), name('def'), opt('VariableDefinitions'), list('Directive'), 'SelectionSet'],
+  Mutation: [word('mutation'), opt(name('def')), opt('VariableDefinitions'), list('Directive'), 'SelectionSet'],
+  Subscription: [word('subscription'), opt(name('def')), opt('VariableDefinitions'), list('Directive'), 'SelectionSet'],
   VariableDefinitions: [p('('), list('VariableDefinition'), p(')')],
   VariableDefinition: ['Variable', p(':'), 'Type', opt('DefaultValue')],
   Variable: [p('$', 'variable'), name('variable')],
@@ -4009,8 +4410,9 @@ var ParseRules = {
   Arguments: [p('('), list('Argument'), p(')')],
   Argument: [name('attribute'), p(':'), 'Value'],
   FragmentSpread: [p('...'), name('def'), list('Directive')],
-  InlineFragment: [p('...'), word('on'), type('atom'), list('Directive'), 'SelectionSet'],
-  FragmentDefinition: [word('fragment'), name('def'), word('on'), type('atom'), list('Directive'), 'SelectionSet'],
+  InlineFragment: [p('...'), opt('TypeCondition'), list('Directive'), 'SelectionSet'],
+  FragmentDefinition: [word('fragment'), name('def'), 'TypeCondition', list('Directive'), 'SelectionSet'],
+  TypeCondition: [word('on'), type('atom')],
   // Variables could be parsed in cases where only Const is expected by spec.
   Value: function Value(token) {
     switch (token.kind) {
@@ -4051,7 +4453,7 @@ var ParseRules = {
   NamedType: [name('atom'), opt(p('!'))],
   Directive: [p('@', 'meta'), name('meta'), opt('Arguments')]
 };
-},{"codemirror":117}],107:[function(require,module,exports){
+},{"codemirror":116}],106:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: http://codemirror.net/LICENSE
 
@@ -4075,22 +4477,28 @@ var ParseRules = {
   }
 
   CodeMirror.commands.toggleComment = function(cm) {
-    var minLine = Infinity, ranges = cm.listSelections(), mode = null;
+    cm.toggleComment();
+  };
+
+  CodeMirror.defineExtension("toggleComment", function(options) {
+    if (!options) options = noOptions;
+    var cm = this;
+    var minLine = Infinity, ranges = this.listSelections(), mode = null;
     for (var i = ranges.length - 1; i >= 0; i--) {
       var from = ranges[i].from(), to = ranges[i].to();
       if (from.line >= minLine) continue;
       if (to.line >= minLine) to = Pos(minLine, 0);
       minLine = from.line;
       if (mode == null) {
-        if (cm.uncomment(from, to)) mode = "un";
-        else { cm.lineComment(from, to); mode = "line"; }
+        if (cm.uncomment(from, to, options)) mode = "un";
+        else { cm.lineComment(from, to, options); mode = "line"; }
       } else if (mode == "un") {
-        cm.uncomment(from, to);
+        cm.uncomment(from, to, options);
       } else {
-        cm.lineComment(from, to);
+        cm.lineComment(from, to, options);
       }
     }
-  };
+  });
 
   CodeMirror.defineExtension("lineComment", function(from, to, options) {
     if (!options) options = noOptions;
@@ -4111,7 +4519,14 @@ var ParseRules = {
 
     self.operation(function() {
       if (options.indent) {
-        var baseString = firstLine.slice(0, firstNonWS(firstLine));
+        var baseString = null;
+        for (var i = from.line; i < end; ++i) {
+          var line = self.getLine(i);
+          var whitespace = line.slice(0, firstNonWS(line));
+          if (baseString == null || baseString.length > whitespace.length) {
+            baseString = whitespace;
+          }
+        }
         for (var i = from.line; i < end; ++i) {
           var line = self.getLine(i), cut = baseString.length;
           if (!blankLines && !nonWS.test(line)) continue;
@@ -4236,7 +4651,7 @@ var ParseRules = {
   });
 });
 
-},{"../../lib/codemirror":117}],108:[function(require,module,exports){
+},{"../../lib/codemirror":116}],107:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: http://codemirror.net/LICENSE
 
@@ -4329,6 +4744,12 @@ var ParseRules = {
     });
   }
 
+  function contractSelection(sel) {
+    var inverted = CodeMirror.cmpPos(sel.anchor, sel.head) > 0;
+    return {anchor: new Pos(sel.anchor.line, sel.anchor.ch + (inverted ? -1 : 1)),
+            head: new Pos(sel.head.line, sel.head.ch + (inverted ? 1 : -1))};
+  }
+
   function handleChar(cm, ch) {
     var conf = getConfig(cm);
     if (!conf || cm.getOption("disableInput")) return CodeMirror.Pass;
@@ -4384,6 +4805,10 @@ var ParseRules = {
         for (var i = 0; i < sels.length; i++)
           sels[i] = left + sels[i] + right;
         cm.replaceSelections(sels, "around");
+        sels = cm.listSelections().slice();
+        for (var i = 0; i < sels.length; i++)
+          sels[i] = contractSelection(sels[i]);
+        cm.setSelections(sels);
       } else if (type == "both") {
         cm.replaceSelection(left + right, null);
         cm.triggerElectric(left + right);
@@ -4423,7 +4848,7 @@ var ParseRules = {
   }
 });
 
-},{"../../lib/codemirror":117}],109:[function(require,module,exports){
+},{"../../lib/codemirror":116}],108:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: http://codemirror.net/LICENSE
 
@@ -4545,7 +4970,7 @@ var ParseRules = {
   });
 });
 
-},{"../../lib/codemirror":117}],110:[function(require,module,exports){
+},{"../../lib/codemirror":116}],109:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: http://codemirror.net/LICENSE
 
@@ -4652,7 +5077,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
 
 });
 
-},{"../../lib/codemirror":117}],111:[function(require,module,exports){
+},{"../../lib/codemirror":116}],110:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: http://codemirror.net/LICENSE
 
@@ -4803,7 +5228,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
   });
 });
 
-},{"../../lib/codemirror":117}],112:[function(require,module,exports){
+},{"../../lib/codemirror":116}],111:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: http://codemirror.net/LICENSE
 
@@ -4951,7 +5376,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
   }
 });
 
-},{"../../lib/codemirror":117,"./foldcode":111}],113:[function(require,module,exports){
+},{"../../lib/codemirror":116,"./foldcode":110}],112:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: http://codemirror.net/LICENSE
 
@@ -4979,8 +5404,18 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
   };
 
   CodeMirror.defineExtension("showHint", function(options) {
-    // We want a single cursor position.
-    if (this.listSelections().length > 1 || this.somethingSelected()) return;
+    options = parseOptions(this, this.getCursor("start"), options);
+    var selections = this.listSelections()
+    if (selections.length > 1) return;
+    // By default, don't allow completion when something is selected.
+    // A hint function can have a `supportsSelection` property to
+    // indicate that it can handle selections.
+    if (this.somethingSelected()) {
+      if (!options.hint.supportsSelection) return;
+      // Don't try with cross-line selections
+      for (var i = 0; i < selections.length; i++)
+        if (selections[i].head.line != selections[i].anchor.line) return;
+    }
 
     if (this.state.completionActive) this.state.completionActive.close();
     var completion = this.state.completionActive = new Completion(this, options);
@@ -4992,12 +5427,12 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
 
   function Completion(cm, options) {
     this.cm = cm;
-    this.options = this.buildOptions(options);
+    this.options = options;
     this.widget = null;
     this.debounce = 0;
     this.tick = 0;
-    this.startPos = this.cm.getCursor();
-    this.startLen = this.cm.getLine(this.startPos.line).length;
+    this.startPos = this.cm.getCursor("start");
+    this.startLen = this.cm.getLine(this.startPos.line).length - this.cm.getSelection().length;
 
     var self = this;
     cm.on("cursorActivity", this.activityFunc = function() { self.cursorActivity(); });
@@ -5078,19 +5513,20 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
           CodeMirror.signal(data, "shown");
         }
       }
-    },
-
-    buildOptions: function(options) {
-      var editor = this.cm.options.hintOptions;
-      var out = {};
-      for (var prop in defaultOptions) out[prop] = defaultOptions[prop];
-      if (editor) for (var prop in editor)
-        if (editor[prop] !== undefined) out[prop] = editor[prop];
-      if (options) for (var prop in options)
-        if (options[prop] !== undefined) out[prop] = options[prop];
-      return out;
     }
   };
+
+  function parseOptions(cm, pos, options) {
+    var editor = cm.options.hintOptions;
+    var out = {};
+    for (var prop in defaultOptions) out[prop] = defaultOptions[prop];
+    if (editor) for (var prop in editor)
+      if (editor[prop] !== undefined) out[prop] = editor[prop];
+    if (options) for (var prop in options)
+      if (options[prop] !== undefined) out[prop] = options[prop];
+    if (out.hint.resolve) out.hint = out.hint.resolve(cm, pos)
+    return out;
+  }
 
   function getText(completion) {
     if (typeof completion == "string") return completion;
@@ -5290,18 +5726,61 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
     }
   };
 
-  CodeMirror.registerHelper("hint", "auto", function(cm, options) {
-    var helpers = cm.getHelpers(cm.getCursor(), "hint"), words;
+  function applicableHelpers(cm, helpers) {
+    if (!cm.somethingSelected()) return helpers
+    var result = []
+    for (var i = 0; i < helpers.length; i++)
+      if (helpers[i].supportsSelection) result.push(helpers[i])
+    return result
+  }
+
+  function resolveAutoHints(cm, pos) {
+    var helpers = cm.getHelpers(pos, "hint"), words
     if (helpers.length) {
-      for (var i = 0; i < helpers.length; i++) {
-        var cur = helpers[i](cm, options);
-        if (cur && cur.list.length) return cur;
+      var async = false, resolved
+      for (var i = 0; i < helpers.length; i++) if (helpers[i].async) async = true
+      if (async) {
+        resolved = function(cm, callback, options) {
+          var app = applicableHelpers(cm, helpers)
+          function run(i, result) {
+            if (i == app.length) return callback(null)
+            var helper = app[i]
+            if (helper.async) {
+              helper(cm, function(result) {
+                if (result) callback(result)
+                else run(i + 1)
+              }, options)
+            } else {
+              var result = helper(cm, options)
+              if (result) callback(result)
+              else run(i + 1)
+            }
+          }
+          run(0)
+        }
+        resolved.async = true
+      } else {
+        resolved = function(cm, options) {
+          var app = applicableHelpers(cm, helpers)
+          for (var i = 0; i < app.length; i++) {
+            var cur = app[i](cm, options)
+            if (cur && cur.list.length) return cur
+          }
+        }
       }
+      resolved.supportsSelection = true
+      return resolved
     } else if (words = cm.getHelper(cm.getCursor(), "hintWords")) {
-      if (words) return CodeMirror.hint.fromList(cm, {words: words});
+      return function(cm) { return CodeMirror.hint.fromList(cm, {words: words}) }
     } else if (CodeMirror.hint.anyword) {
-      return CodeMirror.hint.anyword(cm, options);
+      return function(cm, options) { return CodeMirror.hint.anyword(cm, options) }
+    } else {
+      return function() {}
     }
+  }
+
+  CodeMirror.registerHelper("hint", "auto", {
+    resolve: resolveAutoHints
   });
 
   CodeMirror.registerHelper("hint", "fromList", function(cm, options) {
@@ -5339,7 +5818,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
   CodeMirror.defineOption("hintOptions", null);
 });
 
-},{"../../lib/codemirror":117}],114:[function(require,module,exports){
+},{"../../lib/codemirror":116}],113:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: http://codemirror.net/LICENSE
 
@@ -5403,6 +5882,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
     this.timeout = null;
     this.hasGutter = hasGutter;
     this.onMouseOver = function(e) { onMouseOver(cm, e); };
+    this.waitingFor = 0
   }
 
   function parseOptions(_cm, options) {
@@ -5457,15 +5937,32 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
     return tip;
   }
 
+  function lintAsync(cm, getAnnotations, passOptions) {
+    var state = cm.state.lint
+    var id = ++state.waitingFor
+    function abort() {
+      id = -1
+      cm.off("change", abort)
+    }
+    cm.on("change", abort)
+    getAnnotations(cm.getValue(), function(annotations, arg2) {
+      cm.off("change", abort)
+      if (state.waitingFor != id) return
+      if (arg2 && annotations instanceof CodeMirror) annotations = arg2
+      updateLinting(cm, annotations)
+    }, passOptions, cm);
+  }
+
   function startLinting(cm) {
     var state = cm.state.lint, options = state.options;
     var passOptions = options.options || options; // Support deprecated passing of `options` property in options
     var getAnnotations = options.getAnnotations || cm.getHelper(CodeMirror.Pos(0, 0), "lint");
     if (!getAnnotations) return;
-    if (options.async || getAnnotations.async)
-      getAnnotations(cm.getValue(), updateLinting, passOptions, cm);
-    else
+    if (options.async || getAnnotations.async) {
+      lintAsync(cm, getAnnotations, passOptions)
+    } else {
       updateLinting(cm, getAnnotations(cm.getValue(), passOptions, cm));
+    }
   }
 
   function updateLinting(cm, annotationsNotSorted) {
@@ -5554,7 +6051,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
   });
 });
 
-},{"../../lib/codemirror":117}],115:[function(require,module,exports){
+},{"../../lib/codemirror":116}],114:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: http://codemirror.net/LICENSE
 
@@ -5745,7 +6242,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
   });
 });
 
-},{"../../lib/codemirror":117}],116:[function(require,module,exports){
+},{"../../lib/codemirror":116}],115:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: http://codemirror.net/LICENSE
 
@@ -5988,7 +6485,9 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
     });
   };
 
-  map[ctrl + "/"] = "toggleComment";
+  map[ctrl + "/"] = function(cm) {
+    cm.toggleComment({ indent: true });
+  }
 
   cmds[map[ctrl + "J"] = "joinLines"] = function(cm) {
     var ranges = cm.listSelections(), joined = [];
@@ -6165,11 +6664,19 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
     var cursor = cm.getCursor();
     var toStartOfLine = cm.getRange({line: cursor.line, ch: 0}, cursor);
     var column = CodeMirror.countColumn(toStartOfLine, null, cm.getOption("tabSize"));
+    var indentUnit = cm.getOption("indentUnit");
 
-    if (toStartOfLine && !/\S/.test(toStartOfLine) && column % cm.getOption("indentUnit") == 0)
-      return cm.indentSelection("subtract");
-    else
+    if (toStartOfLine && !/\S/.test(toStartOfLine) && column % indentUnit == 0) {
+      var prevIndent = new Pos(cursor.line,
+        CodeMirror.findColumn(toStartOfLine, column - indentUnit, indentUnit));
+
+      // If no smart delete is happening (due to tab sizing) just do a regular delete
+      if (prevIndent.ch == cursor.ch) return CodeMirror.Pass;
+
+      return cm.replaceRange("", prevIndent, cursor, "+delete");
+    } else {
       return CodeMirror.Pass;
+    }
   };
 
   cmds[map[cK + ctrl + "K"] = "delLineRight"] = function(cm) {
@@ -6302,7 +6809,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
   CodeMirror.normalizeKeyMap(map);
 });
 
-},{"../addon/edit/matchbrackets":109,"../addon/search/searchcursor":115,"../lib/codemirror":117}],117:[function(require,module,exports){
+},{"../addon/edit/matchbrackets":108,"../addon/search/searchcursor":114,"../lib/codemirror":116}],116:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: http://codemirror.net/LICENSE
 
@@ -6326,27 +6833,29 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
 
   // Kludges for bugs and behavior differences that can't be feature
   // detected are enabled based on userAgent etc sniffing.
+  var userAgent = navigator.userAgent;
+  var platform = navigator.platform;
 
-  var gecko = /gecko\/\d/i.test(navigator.userAgent);
-  var ie_upto10 = /MSIE \d/.test(navigator.userAgent);
-  var ie_11up = /Trident\/(?:[7-9]|\d{2,})\..*rv:(\d+)/.exec(navigator.userAgent);
+  var gecko = /gecko\/\d/i.test(userAgent);
+  var ie_upto10 = /MSIE \d/.test(userAgent);
+  var ie_11up = /Trident\/(?:[7-9]|\d{2,})\..*rv:(\d+)/.exec(userAgent);
   var ie = ie_upto10 || ie_11up;
   var ie_version = ie && (ie_upto10 ? document.documentMode || 6 : ie_11up[1]);
-  var webkit = /WebKit\//.test(navigator.userAgent);
-  var qtwebkit = webkit && /Qt\/\d+\.\d+/.test(navigator.userAgent);
-  var chrome = /Chrome\//.test(navigator.userAgent);
-  var presto = /Opera\//.test(navigator.userAgent);
+  var webkit = /WebKit\//.test(userAgent);
+  var qtwebkit = webkit && /Qt\/\d+\.\d+/.test(userAgent);
+  var chrome = /Chrome\//.test(userAgent);
+  var presto = /Opera\//.test(userAgent);
   var safari = /Apple Computer/.test(navigator.vendor);
-  var mac_geMountainLion = /Mac OS X 1\d\D([8-9]|\d\d)\D/.test(navigator.userAgent);
-  var phantom = /PhantomJS/.test(navigator.userAgent);
+  var mac_geMountainLion = /Mac OS X 1\d\D([8-9]|\d\d)\D/.test(userAgent);
+  var phantom = /PhantomJS/.test(userAgent);
 
-  var ios = /AppleWebKit/.test(navigator.userAgent) && /Mobile\/\w+/.test(navigator.userAgent);
+  var ios = /AppleWebKit/.test(userAgent) && /Mobile\/\w+/.test(userAgent);
   // This is woefully incomplete. Suggestions for alternative methods welcome.
-  var mobile = ios || /Android|webOS|BlackBerry|Opera Mini|Opera Mobi|IEMobile/i.test(navigator.userAgent);
-  var mac = ios || /Mac/.test(navigator.platform);
-  var windows = /win/i.test(navigator.platform);
+  var mobile = ios || /Android|webOS|BlackBerry|Opera Mini|Opera Mobi|IEMobile/i.test(userAgent);
+  var mac = ios || /Mac/.test(platform);
+  var windows = /win/i.test(platform);
 
-  var presto_version = presto && navigator.userAgent.match(/Version\/(\d*\.\d*)/);
+  var presto_version = presto && userAgent.match(/Version\/(\d*\.\d*)/);
   if (presto_version) presto_version = Number(presto_version[1]);
   if (presto_version && presto_version >= 15) { presto = false; webkit = true; }
   // Some browsers use the wrong event properties to signal cmd/ctrl on OS X
@@ -7590,6 +8099,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
 
       on(te, "compositionstart", function() {
         var start = cm.getCursor("from");
+        if (input.composing) input.composing.range.clear()
         input.composing = {
           start: start,
           range: cm.markText(start, cm.getCursor("to"), {className: "CodeMirror-composing"})
@@ -7838,6 +8348,10 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
       }
     },
 
+    readOnlyChanged: function(val) {
+      if (!val) this.reset();
+    },
+
     setUneditable: nothing,
 
     needsContentAttribute: false
@@ -7856,7 +8370,6 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
     init: function(display) {
       var input = this, cm = input.cm;
       var div = input.div = display.lineDiv;
-      div.contentEditable = "true";
       disableBrowserMagic(div);
 
       on(div, "paste", function(e) { handlePaste(e, cm); })
@@ -7897,7 +8410,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
 
       on(div, "input", function() {
         if (input.composing) return;
-        if (!input.pollContent())
+        if (isReadOnly(cm) || !input.pollContent())
           runInOp(input.cm, function() {regChange(cm);});
       });
 
@@ -8122,17 +8635,24 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
       this.div.focus();
     },
     applyComposition: function(composing) {
-      if (composing.data && composing.data != composing.startData)
+      if (isReadOnly(this.cm))
+        operation(this.cm, regChange)(this.cm)
+      else if (composing.data && composing.data != composing.startData)
         operation(this.cm, applyTextInput)(this.cm, composing.data, 0, composing.sel);
     },
 
     setUneditable: function(node) {
-      node.setAttribute("contenteditable", "false");
+      node.contentEditable = "false"
     },
 
     onKeyPress: function(e) {
       e.preventDefault();
-      operation(this.cm, applyTextInput)(this.cm, String.fromCharCode(e.charCode == null ? e.keyCode : e.charCode), 0);
+      if (!isReadOnly(this.cm))
+        operation(this.cm, applyTextInput)(this.cm, String.fromCharCode(e.charCode == null ? e.keyCode : e.charCode), 0);
+    },
+
+    readOnlyChanged: function(val) {
+      this.div.contentEditable = String(val != "nocursor")
     },
 
     onContextMenu: nothing,
@@ -10115,9 +10635,15 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
     if (files && files.length && window.FileReader && window.File) {
       var n = files.length, text = Array(n), read = 0;
       var loadFile = function(file, i) {
+        if (cm.options.allowDropFileTypes &&
+            indexOf(cm.options.allowDropFileTypes, file.type) == -1)
+          return;
+
         var reader = new FileReader;
         reader.onload = operation(cm, function() {
-          text[i] = reader.result;
+          var content = reader.result;
+          if (/[\x00-\x08\x0e-\x1f]{2}/.test(content)) content = "";
+          text[i] = content;
           if (++read == n) {
             pos = clipPos(cm.doc, pos);
             var change = {from: pos, to: pos,
@@ -10259,8 +10785,9 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
 
     var display = cm.display, scroll = display.scroller;
     // Quit if there's nothing to scroll here
-    if (!(dx && scroll.scrollWidth > scroll.clientWidth ||
-          dy && scroll.scrollHeight > scroll.clientHeight)) return;
+    var canScrollX = scroll.scrollWidth > scroll.clientWidth;
+    var canScrollY = scroll.scrollHeight > scroll.clientHeight;
+    if (!(dx && canScrollX || dy && canScrollY)) return;
 
     // Webkit browsers on OS X abort momentum scrolls when the target
     // of the scroll event is removed from the scrollable element.
@@ -10284,10 +10811,15 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
     // scrolling entirely here. It'll be slightly off from native, but
     // better than glitching out.
     if (dx && !gecko && !presto && wheelPixelsPerUnit != null) {
-      if (dy)
+      if (dy && canScrollY)
         setScrollTop(cm, Math.max(0, Math.min(scroll.scrollTop + dy * wheelPixelsPerUnit, scroll.scrollHeight - scroll.clientHeight)));
       setScrollLeft(cm, Math.max(0, Math.min(scroll.scrollLeft + dx * wheelPixelsPerUnit, scroll.scrollWidth - scroll.clientWidth)));
-      e_preventDefault(e);
+      // Only prevent default scrolling if vertical scrolling is
+      // actually possible. Otherwise, it causes vertical scroll
+      // jitter on OSX trackpads when deltaX is small and deltaY
+      // is large (issue #3579)
+      if (!dy || (dy && canScrollY))
+        e_preventDefault(e);
       display.wheelStartX = null; // Abort measurement, if in progress
       return;
     }
@@ -10515,6 +11047,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
   // right-click take effect on it.
   function onContextMenu(cm, e) {
     if (eventInWidget(cm.display, e) || contextMenuInGutter(cm, e)) return;
+    if (signalDOMEvent(cm, e, "contextmenu")) return;
     cm.display.input.onContextMenu(e);
   }
 
@@ -11693,11 +12226,12 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
       cm.display.disabled = true;
     } else {
       cm.display.disabled = false;
-      if (!val) cm.display.input.reset();
     }
+    cm.display.input.readOnlyChanged(val)
   });
   option("disableInput", false, function(cm, val) {if (!val) cm.display.input.reset();}, true);
   option("dragDrop", true, dragDropChanged);
+  option("allowDropFileTypes", null);
 
   option("cursorBlinkRate", 530);
   option("cursorScrollMargin", 0);
@@ -12002,8 +12536,8 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
           var range = cm.listSelections()[i];
           cm.replaceRange(cm.doc.lineSeparator(), range.anchor, range.head, "+input");
           cm.indentLine(range.from().line + 1, null, true);
-          ensureCursorVisible(cm);
         }
+        ensureCursorVisible(cm);
       });
     },
     toggleOverwrite: function(cm) {cm.toggleOverwrite();}
@@ -13257,7 +13791,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
           txt.setAttribute("cm-text", "\t");
           builder.col += tabWidth;
         } else if (m[0] == "\r" || m[0] == "\n") {
-          var txt = content.appendChild(elt("span", m[0] == "\r" ? "␍" : "␤", "cm-invalidchar"));
+          var txt = content.appendChild(elt("span", m[0] == "\r" ? "\u240d" : "\u2424", "cm-invalidchar"));
           txt.setAttribute("cm-text", m[0]);
           builder.col += 1;
         } else {
@@ -13836,7 +14370,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
     removeLineWidget: function(widget) { widget.clear(); },
 
     markText: function(from, to, options) {
-      return markText(this, clipPos(this, from), clipPos(this, to), options, "range");
+      return markText(this, clipPos(this, from), clipPos(this, to), options, options && options.type || "range");
     },
     setBookmark: function(pos, options) {
       var realOpts = {replacedWith: options && (options.nodeType == null ? options.widget : options),
@@ -14397,24 +14931,30 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
     }
   };
 
+  var noHandlers = []
+  function getHandlers(emitter, type, copy) {
+    var arr = emitter._handlers && emitter._handlers[type]
+    if (copy) return arr && arr.length > 0 ? arr.slice() : noHandlers
+    else return arr || noHandlers
+  }
+
   var off = CodeMirror.off = function(emitter, type, f) {
     if (emitter.removeEventListener)
       emitter.removeEventListener(type, f, false);
     else if (emitter.detachEvent)
       emitter.detachEvent("on" + type, f);
     else {
-      var arr = emitter._handlers && emitter._handlers[type];
-      if (!arr) return;
-      for (var i = 0; i < arr.length; ++i)
-        if (arr[i] == f) { arr.splice(i, 1); break; }
+      var handlers = getHandlers(emitter, type, false)
+      for (var i = 0; i < handlers.length; ++i)
+        if (handlers[i] == f) { handlers.splice(i, 1); break; }
     }
   };
 
   var signal = CodeMirror.signal = function(emitter, type /*, values...*/) {
-    var arr = emitter._handlers && emitter._handlers[type];
-    if (!arr) return;
+    var handlers = getHandlers(emitter, type, true)
+    if (!handlers.length) return;
     var args = Array.prototype.slice.call(arguments, 2);
-    for (var i = 0; i < arr.length; ++i) arr[i].apply(null, args);
+    for (var i = 0; i < handlers.length; ++i) handlers[i].apply(null, args);
   };
 
   var orphanDelayedCallbacks = null;
@@ -14427,8 +14967,8 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
   // them to be executed when the last operation ends, or, if no
   // operation is active, when a timeout fires.
   function signalLater(emitter, type /*, values...*/) {
-    var arr = emitter._handlers && emitter._handlers[type];
-    if (!arr) return;
+    var arr = getHandlers(emitter, type, false)
+    if (!arr.length) return;
     var args = Array.prototype.slice.call(arguments, 2), list;
     if (operationGroup) {
       list = operationGroup.delayedCallbacks;
@@ -14468,8 +15008,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
   }
 
   function hasHandler(emitter, type) {
-    var arr = emitter._handlers && emitter._handlers[type];
-    return arr && arr.length > 0;
+    return getHandlers(emitter, type).length > 0
   }
 
   // Add on and off methods to a constructor's prototype, to make
@@ -14516,7 +15055,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
 
   // The inverse of countColumn -- find the offset that corresponds to
   // a particular column.
-  function findColumn(string, goal, tabSize) {
+  var findColumn = CodeMirror.findColumn = function(string, goal, tabSize) {
     for (var pos = 0, col = 0;;) {
       var nextTab = string.indexOf("\t", pos);
       if (nextTab == -1) nextTab = string.length;
@@ -14809,14 +15348,16 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
 
   // KEY NAMES
 
-  var keyNames = {3: "Enter", 8: "Backspace", 9: "Tab", 13: "Enter", 16: "Shift", 17: "Ctrl", 18: "Alt",
-                  19: "Pause", 20: "CapsLock", 27: "Esc", 32: "Space", 33: "PageUp", 34: "PageDown", 35: "End",
-                  36: "Home", 37: "Left", 38: "Up", 39: "Right", 40: "Down", 44: "PrintScrn", 45: "Insert",
-                  46: "Delete", 59: ";", 61: "=", 91: "Mod", 92: "Mod", 93: "Mod", 107: "=", 109: "-", 127: "Delete",
-                  173: "-", 186: ";", 187: "=", 188: ",", 189: "-", 190: ".", 191: "/", 192: "`", 219: "[", 220: "\\",
-                  221: "]", 222: "'", 63232: "Up", 63233: "Down", 63234: "Left", 63235: "Right", 63272: "Delete",
-                  63273: "Home", 63275: "End", 63276: "PageUp", 63277: "PageDown", 63302: "Insert"};
-  CodeMirror.keyNames = keyNames;
+  var keyNames = CodeMirror.keyNames = {
+    3: "Enter", 8: "Backspace", 9: "Tab", 13: "Enter", 16: "Shift", 17: "Ctrl", 18: "Alt",
+    19: "Pause", 20: "CapsLock", 27: "Esc", 32: "Space", 33: "PageUp", 34: "PageDown", 35: "End",
+    36: "Home", 37: "Left", 38: "Up", 39: "Right", 40: "Down", 44: "PrintScrn", 45: "Insert",
+    46: "Delete", 59: ";", 61: "=", 91: "Mod", 92: "Mod", 93: "Mod",
+    106: "*", 107: "=", 109: "-", 110: ".", 111: "/", 127: "Delete",
+    173: "-", 186: ";", 187: "=", 188: ",", 189: "-", 190: ".", 191: "/", 192: "`", 219: "[", 220: "\\",
+    221: "]", 222: "'", 63232: "Up", 63233: "Down", 63234: "Left", 63235: "Right", 63272: "Delete",
+    63273: "Home", 63275: "End", 63276: "PageUp", 63277: "PageDown", 63302: "Insert"
+  };
   (function() {
     // Number keys
     for (var i = 0; i < 10; i++) keyNames[i + 48] = keyNames[i + 96] = String(i);
@@ -15121,12 +15662,12 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
 
   // THE END
 
-  CodeMirror.version = "5.6.0";
+  CodeMirror.version = "5.8.0";
 
   return CodeMirror;
 });
 
-},{}],118:[function(require,module,exports){
+},{}],117:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: http://codemirror.net/LICENSE
 
@@ -15159,14 +15700,14 @@ CodeMirror.defineMode("javascript", function(config, parserConfig) {
 
     var jsKeywords = {
       "if": kw("if"), "while": A, "with": A, "else": B, "do": B, "try": B, "finally": B,
-      "return": C, "break": C, "continue": C, "new": C, "delete": C, "throw": C, "debugger": C,
+      "return": C, "break": C, "continue": C, "new": kw("new"), "delete": C, "throw": C, "debugger": C,
       "var": kw("var"), "const": kw("var"), "let": kw("var"),
-      "function": kw("function"), "catch": kw("catch"),
+      "async": kw("async"), "function": kw("function"), "catch": kw("catch"),
       "for": kw("for"), "switch": kw("switch"), "case": kw("case"), "default": kw("default"),
       "in": operator, "typeof": operator, "instanceof": operator,
       "true": atom, "false": atom, "null": atom, "undefined": atom, "NaN": atom, "Infinity": atom,
       "this": kw("this"), "class": kw("class"), "super": kw("atom"),
-      "yield": C, "export": kw("export"), "import": kw("import"), "extends": C
+      "await": C, "yield": C, "export": kw("export"), "import": kw("import"), "extends": C
     };
 
     // Extend the 'normal' keywords with the TypeScript language extensions
@@ -15185,7 +15726,7 @@ CodeMirror.defineMode("javascript", function(config, parserConfig) {
         "static": kw("static"),
 
         // types
-        "string": type, "number": type, "bool": type, "any": type
+        "string": type, "number": type, "boolean": type, "any": type
       };
 
       for (var attr in tsKeywords) {
@@ -15234,6 +15775,12 @@ CodeMirror.defineMode("javascript", function(config, parserConfig) {
     } else if (ch == "0" && stream.eat(/x/i)) {
       stream.eatWhile(/[\da-f]/i);
       return ret("number", "number");
+    } else if (ch == "0" && stream.eat(/o/i)) {
+      stream.eatWhile(/[0-7]/i);
+      return ret("number", "number");
+    } else if (ch == "0" && stream.eat(/b/i)) {
+      stream.eatWhile(/[01]/i);
+      return ret("number", "number");
     } else if (/\d/.test(ch)) {
       stream.match(/^\d*(?:\.\d*)?(?:[eE][+\-]?\d+)?/);
       return ret("number", "number");
@@ -15245,7 +15792,7 @@ CodeMirror.defineMode("javascript", function(config, parserConfig) {
         stream.skipToEnd();
         return ret("comment", "comment");
       } else if (state.lastType == "operator" || state.lastType == "keyword c" ||
-               state.lastType == "sof" || /^[\[{}\(,;:]$/.test(state.lastType)) {
+                 state.lastType == "sof" || /^[\[{}\(,;:]$/.test(state.lastType)) {
         readRegexp(stream);
         stream.match(/^\b(([gimyu])(?![gimyu]*\2))+\b/);
         return ret("regexp", "string-2");
@@ -15404,8 +15951,8 @@ CodeMirror.defineMode("javascript", function(config, parserConfig) {
       return false;
     }
     var state = cx.state;
+    cx.marked = "def";
     if (state.context) {
-      cx.marked = "def";
       if (inList(state.localVars)) return;
       state.localVars = {name: varname, next: state.localVars};
     } else {
@@ -15477,8 +16024,8 @@ CodeMirror.defineMode("javascript", function(config, parserConfig) {
     if (type == "catch") return cont(pushlex("form"), pushcontext, expect("("), funarg, expect(")"),
                                      statement, poplex, popcontext);
     if (type == "class") return cont(pushlex("form"), className, poplex);
-    if (type == "export") return cont(pushlex("form"), afterExport, poplex);
-    if (type == "import") return cont(pushlex("form"), afterImport, poplex);
+    if (type == "export") return cont(pushlex("stat"), afterExport, poplex);
+    if (type == "import") return cont(pushlex("stat"), afterImport, poplex);
     return pass(pushlex("stat"), expression, expect(";"), poplex);
   }
   function expression(type) {
@@ -15496,13 +16043,15 @@ CodeMirror.defineMode("javascript", function(config, parserConfig) {
 
     var maybeop = noComma ? maybeoperatorNoComma : maybeoperatorComma;
     if (atomicTypes.hasOwnProperty(type)) return cont(maybeop);
+    if (type == "async") return cont(expression);
     if (type == "function") return cont(functiondef, maybeop);
     if (type == "keyword c") return cont(noComma ? maybeexpressionNoComma : maybeexpression);
     if (type == "(") return cont(pushlex(")"), maybeexpression, comprehension, expect(")"), poplex, maybeop);
     if (type == "operator" || type == "spread") return cont(noComma ? expressionNoComma : expression);
     if (type == "[") return cont(pushlex("]"), arrayLiteral, poplex, maybeop);
     if (type == "{") return contCommasep(objprop, "}", null, maybeop);
-    if (type == "quasi") { return pass(quasi, maybeop); }
+    if (type == "quasi") return pass(quasi, maybeop);
+    if (type == "new") return cont(maybeTarget(noComma));
     return cont();
   }
   function maybeexpression(type) {
@@ -15553,6 +16102,18 @@ CodeMirror.defineMode("javascript", function(config, parserConfig) {
     findFatArrow(cx.stream, cx.state);
     return pass(type == "{" ? statement : expressionNoComma);
   }
+  function maybeTarget(noComma) {
+    return function(type) {
+      if (type == ".") return cont(noComma ? targetNoComma : target);
+      else return pass(noComma ? expressionNoComma : expression);
+    };
+  }
+  function target(_, value) {
+    if (value == "target") { cx.marked = "keyword"; return cont(maybeoperatorComma); }
+  }
+  function targetNoComma(_, value) {
+    if (value == "target") { cx.marked = "keyword"; return cont(maybeoperatorNoComma); }
+  }
   function maybelabel(type) {
     if (type == ":") return cont(poplex, statement);
     return pass(maybeoperatorComma, expect(";"), poplex);
@@ -15561,7 +16122,9 @@ CodeMirror.defineMode("javascript", function(config, parserConfig) {
     if (type == "variable") {cx.marked = "property"; return cont();}
   }
   function objprop(type, value) {
-    if (type == "variable" || cx.style == "keyword") {
+    if (type == "async") {
+      return cont(objprop);
+    } else if (type == "variable" || cx.style == "keyword") {
       cx.marked = "property";
       if (value == "get" || value == "set") return cont(getterSetter);
       return cont(afterprop);
@@ -15621,6 +16184,7 @@ CodeMirror.defineMode("javascript", function(config, parserConfig) {
   }
   function pattern(type, value) {
     if (type == "variable") { register(value); return cont(); }
+    if (type == "spread") return cont(pattern);
     if (type == "[") return contCommasep(pattern, "]");
     if (type == "{") return contCommasep(proppattern, "}");
   }
@@ -15630,6 +16194,7 @@ CodeMirror.defineMode("javascript", function(config, parserConfig) {
       return cont(maybeAssign);
     }
     if (type == "variable") cx.marked = "property";
+    if (type == "spread") return cont(pattern);
     return cont(expect(":"), pattern, maybeAssign);
   }
   function maybeAssign(_type, value) {
@@ -15827,7 +16392,7 @@ CodeMirror.defineMIME("application/typescript", { name: "javascript", typescript
 
 });
 
-},{"../../lib/codemirror":117}],119:[function(require,module,exports){
+},{"../../lib/codemirror":116}],118:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -15914,7 +16479,7 @@ var GraphQLError = (function (_Error) {
 })(Error);
 
 exports.GraphQLError = GraphQLError;
-},{"../language":133,"babel-runtime/helpers/class-call-check":20,"babel-runtime/helpers/get":22,"babel-runtime/helpers/inherits":23}],120:[function(require,module,exports){
+},{"../language":128,"babel-runtime/helpers/class-call-check":23,"babel-runtime/helpers/get":26,"babel-runtime/helpers/inherits":27}],119:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -15949,7 +16514,7 @@ function formatError(error) {
     locations: error.locations
   };
 }
-},{"../jsutils/invariant":129,"babel-runtime/helpers/interop-require-default":24}],121:[function(require,module,exports){
+},{"../jsutils/invariant":124,"babel-runtime/helpers/interop-require-default":28}],120:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -16001,7 +16566,7 @@ Object.defineProperty(exports, 'formatError', {
     return _formatError.formatError;
   }
 });
-},{"./GraphQLError":119,"./formatError":120,"./locatedError":122,"./syntaxError":123}],122:[function(require,module,exports){
+},{"./GraphQLError":118,"./formatError":119,"./locatedError":121,"./syntaxError":122}],121:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -16032,7 +16597,7 @@ function locatedError(error, nodes) {
   var stack = error ? error.stack : null;
   return new _GraphQLError.GraphQLError(message, nodes, stack);
 }
-},{"./GraphQLError":119}],123:[function(require,module,exports){
+},{"./GraphQLError":118}],122:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -16082,956 +16647,7 @@ function highlightSourceAtLocation(source, location) {
 function lpad(len, str) {
   return Array(len - str.length + 1).join(' ') + str;
 }
-},{"../language/location":136,"./GraphQLError":119}],124:[function(require,module,exports){
-
-/**
- *  Copyright (c) 2015, Facebook, Inc.
- *  All rights reserved.
- *
- *  This source code is licensed under the BSD-style license found in the
- *  LICENSE file in the root directory of this source tree. An additional grant
- *  of patent rights can be found in the PATENTS file in the same directory.
- */
-
-/**
- * Terminology
- *
- * "Definitions" are the generic name for top-level statements in the document.
- * Examples of this include:
- * 1) Operations (such as a query)
- * 2) Fragments
- *
- * "Operations" are a generic name for requests in the document.
- * Examples of this include:
- * 1) query,
- * 2) mutation
- *
- * "Selections" are the statements that can appear legally and at
- * single level of the query. These include:
- * 1) field references e.g "a"
- * 2) fragment "spreads" e.g. "...c"
- * 3) inline fragment "spreads" e.g. "...on Type { a }"
- */
-
-/**
- * Data that must be available at all points during query execution.
- *
- * Namely, schema of the type system that is currently executing,
- * and the fragments defined in the query document
- */
-'use strict';
-
-/**
- * The result of execution. `data` is the result of executing the
- * query, `errors` is null if no errors occurred, and is a
- * non-empty array if an error occurred.
- */
-
-var _Promise = require('babel-runtime/core-js/promise')['default'];
-
-var _Object$keys = require('babel-runtime/core-js/object/keys')['default'];
-
-var _interopRequireDefault = require('babel-runtime/helpers/interop-require-default')['default'];
-
-Object.defineProperty(exports, '__esModule', {
-  value: true
-});
-exports.execute = execute;
-
-var _error = require('../error');
-
-var _jsutilsFind = require('../jsutils/find');
-
-var _jsutilsFind2 = _interopRequireDefault(_jsutilsFind);
-
-var _jsutilsInvariant = require('../jsutils/invariant');
-
-var _jsutilsInvariant2 = _interopRequireDefault(_jsutilsInvariant);
-
-var _jsutilsIsNullish = require('../jsutils/isNullish');
-
-var _jsutilsIsNullish2 = _interopRequireDefault(_jsutilsIsNullish);
-
-var _utilitiesTypeFromAST = require('../utilities/typeFromAST');
-
-var _language = require('../language');
-
-var _values = require('./values');
-
-var _typeDefinition = require('../type/definition');
-
-var _typeSchema = require('../type/schema');
-
-var _typeIntrospection = require('../type/introspection');
-
-var _typeDirectives = require('../type/directives');
-
-/**
- * Implements the "Evaluating requests" section of the GraphQL specification.
- *
- * Returns a Promise that will eventually be resolved and never rejected.
- *
- * If the arguments to this function do not result in a legal execution context,
- * a GraphQLError will be thrown immediately explaining the invalid input.
- */
-
-function execute(schema, documentAST, rootValue, variableValues, operationName) {
-  (0, _jsutilsInvariant2['default'])(schema, 'Must provide schema');
-  (0, _jsutilsInvariant2['default'])(schema instanceof _typeSchema.GraphQLSchema, 'Schema must be an instance of GraphQLSchema. Also ensure that there are ' + 'not multiple versions of GraphQL installed in your node_modules directory.');
-
-  // If a valid context cannot be created due to incorrect arguments,
-  // this will throw an error.
-  var context = buildExecutionContext(schema, documentAST, rootValue, variableValues, operationName);
-
-  // Return a Promise that will eventually resolve to the data described by
-  // The "Response" section of the GraphQL specification.
-  //
-  // If errors are encountered while executing a GraphQL field, only that
-  // field and it's descendents will be omitted, and sibling fields will still
-  // be executed. An execution which encounters errors will still result in a
-  // resolved Promise.
-  return new _Promise(function (resolve) {
-    resolve(executeOperation(context, context.operation, rootValue));
-  })['catch'](function (error) {
-    // Errors from sub-fields of a NonNull type may propagate to the top level,
-    // at which point we still log the error and null the parent field, which
-    // in this case is the entire response.
-    context.errors.push(error);
-    return null;
-  }).then(function (data) {
-    if (!context.errors.length) {
-      return { data: data };
-    }
-    return { data: data, errors: context.errors };
-  });
-}
-
-/**
- * Constructs a ExecutionContext object from the arguments passed to
- * execute, which we will pass throughout the other execution methods.
- *
- * Throws a GraphQLError if a valid execution context cannot be created.
- */
-function buildExecutionContext(schema, documentAST, rootValue, rawVariableValues, operationName) {
-  var errors = [];
-  var operations = {};
-  var fragments = {};
-  documentAST.definitions.forEach(function (statement) {
-    switch (statement.kind) {
-      case _language.Kind.OPERATION_DEFINITION:
-        operations[statement.name ? statement.name.value : ''] = statement;
-        break;
-      case _language.Kind.FRAGMENT_DEFINITION:
-        fragments[statement.name.value] = statement;
-        break;
-    }
-  });
-  if (!operationName && _Object$keys(operations).length !== 1) {
-    throw new _error.GraphQLError('Must provide operation name if query contains multiple operations.');
-  }
-  var opName = operationName || _Object$keys(operations)[0];
-  var operation = operations[opName];
-  if (!operation) {
-    throw new _error.GraphQLError('Unknown operation named "' + opName + '".');
-  }
-  var variableValues = (0, _values.getVariableValues)(schema, operation.variableDefinitions || [], rawVariableValues || {});
-  var exeContext = { schema: schema, fragments: fragments, rootValue: rootValue, operation: operation, variableValues: variableValues, errors: errors };
-  return exeContext;
-}
-
-/**
- * Implements the "Evaluating operations" section of the spec.
- */
-function executeOperation(exeContext, operation, rootValue) {
-  var type = getOperationRootType(exeContext.schema, operation);
-  var fields = collectFields(exeContext, type, operation.selectionSet, {}, {});
-  if (operation.operation === 'mutation') {
-    return executeFieldsSerially(exeContext, type, rootValue, fields);
-  }
-  return executeFields(exeContext, type, rootValue, fields);
-}
-
-/**
- * Extracts the root type of the operation from the schema.
- */
-function getOperationRootType(schema, operation) {
-  switch (operation.operation) {
-    case 'query':
-      return schema.getQueryType();
-    case 'mutation':
-      var mutationType = schema.getMutationType();
-      if (!mutationType) {
-        throw new _error.GraphQLError('Schema is not configured for mutations', [operation]);
-      }
-      return mutationType;
-    default:
-      throw new _error.GraphQLError('Can only execute queries and mutations', [operation]);
-  }
-}
-
-/**
- * Implements the "Evaluating selection sets" section of the spec
- * for "write" mode.
- */
-function executeFieldsSerially(exeContext, parentType, sourceValue, fields) {
-  return _Object$keys(fields).reduce(function (prevPromise, responseName) {
-    return prevPromise.then(function (results) {
-      var fieldASTs = fields[responseName];
-      var result = resolveField(exeContext, parentType, sourceValue, fieldASTs);
-      if (result === undefined) {
-        return results;
-      }
-      if (isThenable(result)) {
-        return result.then(function (resolvedResult) {
-          results[responseName] = resolvedResult;
-          return results;
-        });
-      }
-      results[responseName] = result;
-      return results;
-    });
-  }, _Promise.resolve({}));
-}
-
-/**
- * Implements the "Evaluating selection sets" section of the spec
- * for "read" mode.
- */
-function executeFields(exeContext, parentType, sourceValue, fields) {
-  var containsPromise = false;
-
-  var finalResults = _Object$keys(fields).reduce(function (results, responseName) {
-    var fieldASTs = fields[responseName];
-    var result = resolveField(exeContext, parentType, sourceValue, fieldASTs);
-    if (result === undefined) {
-      return results;
-    }
-    results[responseName] = result;
-    if (isThenable(result)) {
-      containsPromise = true;
-    }
-    return results;
-  }, {});
-
-  // If there are no promises, we can just return the object
-  if (!containsPromise) {
-    return finalResults;
-  }
-
-  // Otherwise, results is a map from field name to the result
-  // of resolving that field, which is possibly a promise. Return
-  // a promise that will return this same map, but with any
-  // promises replaced with the values they resolved to.
-  return promiseForObject(finalResults);
-}
-
-/**
- * Given a selectionSet, adds all of the fields in that selection to
- * the passed in map of fields, and returns it at the end.
- */
-function collectFields(exeContext, type, selectionSet, fields, visitedFragmentNames) {
-  for (var i = 0; i < selectionSet.selections.length; i++) {
-    var selection = selectionSet.selections[i];
-    switch (selection.kind) {
-      case _language.Kind.FIELD:
-        if (!shouldIncludeNode(exeContext, selection.directives)) {
-          continue;
-        }
-        var name = getFieldEntryKey(selection);
-        if (!fields[name]) {
-          fields[name] = [];
-        }
-        fields[name].push(selection);
-        break;
-      case _language.Kind.INLINE_FRAGMENT:
-        if (!shouldIncludeNode(exeContext, selection.directives) || !doesFragmentConditionMatch(exeContext, selection, type)) {
-          continue;
-        }
-        collectFields(exeContext, type, selection.selectionSet, fields, visitedFragmentNames);
-        break;
-      case _language.Kind.FRAGMENT_SPREAD:
-        var fragName = selection.name.value;
-        if (visitedFragmentNames[fragName] || !shouldIncludeNode(exeContext, selection.directives)) {
-          continue;
-        }
-        visitedFragmentNames[fragName] = true;
-        var fragment = exeContext.fragments[fragName];
-        if (!fragment || !shouldIncludeNode(exeContext, fragment.directives) || !doesFragmentConditionMatch(exeContext, fragment, type)) {
-          continue;
-        }
-        collectFields(exeContext, type, fragment.selectionSet, fields, visitedFragmentNames);
-        break;
-    }
-  }
-  return fields;
-}
-
-/**
- * Determines if a field should be included based on the @include and @skip
- * directives, where @skip has higher precidence than @include.
- */
-function shouldIncludeNode(exeContext, directives) {
-  var skipAST = directives && (0, _jsutilsFind2['default'])(directives, function (directive) {
-    return directive.name.value === _typeDirectives.GraphQLSkipDirective.name;
-  });
-  if (skipAST) {
-    var _getArgumentValues = (0, _values.getArgumentValues)(_typeDirectives.GraphQLSkipDirective.args, skipAST.arguments, exeContext.variableValues);
-
-    var skipIf = _getArgumentValues['if'];
-
-    return !skipIf;
-  }
-
-  var includeAST = directives && (0, _jsutilsFind2['default'])(directives, function (directive) {
-    return directive.name.value === _typeDirectives.GraphQLIncludeDirective.name;
-  });
-  if (includeAST) {
-    var _getArgumentValues2 = (0, _values.getArgumentValues)(_typeDirectives.GraphQLIncludeDirective.args, includeAST.arguments, exeContext.variableValues);
-
-    var includeIf = _getArgumentValues2['if'];
-
-    return Boolean(includeIf);
-  }
-
-  return true;
-}
-
-/**
- * Determines if a fragment is applicable to the given type.
- */
-function doesFragmentConditionMatch(exeContext, fragment, type) {
-  var conditionalType = (0, _utilitiesTypeFromAST.typeFromAST)(exeContext.schema, fragment.typeCondition);
-  if (conditionalType === type) {
-    return true;
-  }
-  if ((0, _typeDefinition.isAbstractType)(conditionalType)) {
-    return conditionalType.isPossibleType(type);
-  }
-  return false;
-}
-
-/**
- * This function transforms a JS object `{[key: string]: Promise<any>}` into
- * a `Promise<{[key: string]: any}>`
- *
- * This is akin to bluebird's `Promise.props`, but implemented only using
- * `Promise.all` so it will work with any implementation of ES6 promises.
- */
-function promiseForObject(object) {
-  var keys = _Object$keys(object);
-  var valuesAndPromises = keys.map(function (name) {
-    return object[name];
-  });
-  return _Promise.all(valuesAndPromises).then(function (values) {
-    return values.reduce(function (resolvedObject, value, i) {
-      resolvedObject[keys[i]] = value;
-      return resolvedObject;
-    }, {});
-  });
-}
-
-/**
- * Implements the logic to compute the key of a given field’s entry
- */
-function getFieldEntryKey(node) {
-  return node.alias ? node.alias.value : node.name.value;
-}
-
-/**
- * Resolves the field on the given source object. In particular, this
- * figures out the value that the field returns by calling its resolve function,
- * then calls completeValue to complete promises, serialize scalars, or execute
- * the sub-selection-set for objects.
- */
-function resolveField(exeContext, parentType, source, fieldASTs) {
-  var fieldAST = fieldASTs[0];
-  var fieldName = fieldAST.name.value;
-
-  var fieldDef = getFieldDef(exeContext.schema, parentType, fieldName);
-  if (!fieldDef) {
-    return;
-  }
-
-  var returnType = fieldDef.type;
-  var resolveFn = fieldDef.resolve || defaultResolveFn;
-
-  // Build a JS object of arguments from the field.arguments AST, using the
-  // variables scope to fulfill any variable references.
-  // TODO: find a way to memoize, in case this field is within a List type.
-  var args = (0, _values.getArgumentValues)(fieldDef.args, fieldAST.arguments, exeContext.variableValues);
-
-  // The resolve function's optional third argument is a collection of
-  // information about the current execution state.
-  var info = {
-    fieldName: fieldName,
-    fieldASTs: fieldASTs,
-    returnType: returnType,
-    parentType: parentType,
-    schema: exeContext.schema,
-    fragments: exeContext.fragments,
-    rootValue: exeContext.rootValue,
-    operation: exeContext.operation,
-    variableValues: exeContext.variableValues
-  };
-
-  // If an error occurs while calling the field `resolve` function, ensure that
-  // it is wrapped as a GraphQLError with locations. Log this error and return
-  // null if allowed, otherwise throw the error so the parent field can handle
-  // it.
-  try {
-    var result = resolveFn(source, args, info);
-  } catch (error) {
-    var reportedError = (0, _error.locatedError)(error, fieldASTs);
-    if (returnType instanceof _typeDefinition.GraphQLNonNull) {
-      throw reportedError;
-    }
-    exeContext.errors.push(reportedError);
-    return null;
-  }
-
-  return completeValueCatchingError(exeContext, returnType, fieldASTs, info, result);
-}
-
-function completeValueCatchingError(exeContext, returnType, fieldASTs, info, result) {
-  // If the field type is non-nullable, then it is resolved without any
-  // protection from errors.
-  if (returnType instanceof _typeDefinition.GraphQLNonNull) {
-    return completeValue(exeContext, returnType, fieldASTs, info, result);
-  }
-
-  // Otherwise, error protection is applied, logging the error and resolving
-  // a null value for this field if one is encountered.
-  try {
-    var completed = completeValue(exeContext, returnType, fieldASTs, info, result);
-    if (isThenable(completed)) {
-      // Note: we don't rely on a `catch` method, but we do expect "thenable"
-      // to take a second callback for the error case.
-      return completed.then(undefined, function (error) {
-        exeContext.errors.push(error);
-        return _Promise.resolve(null);
-      });
-    }
-    return completed;
-  } catch (error) {
-    exeContext.errors.push(error);
-    return null;
-  }
-}
-
-/**
- * Implements the instructions for completeValue as defined in the
- * "Field entries" section of the spec.
- *
- * If the field type is Non-Null, then this recursively completes the value
- * for the inner type. It throws a field error if that completion returns null,
- * as per the "Nullability" section of the spec.
- *
- * If the field type is a List, then this recursively completes the value
- * for the inner type on each item in the list.
- *
- * If the field type is a Scalar or Enum, ensures the completed value is a legal
- * value of the type by calling the `serialize` method of GraphQL type
- * definition.
- *
- * Otherwise, the field type expects a sub-selection set, and will complete the
- * value by evaluating all sub-selections.
- */
-function completeValue(exeContext, returnType, fieldASTs, info, result) {
-  // If result is a Promise, resolve it, if the Promise is rejected, construct
-  // a GraphQLError with proper locations.
-  if (isThenable(result)) {
-    return result.then(function (resolved) {
-      return completeValue(exeContext, returnType, fieldASTs, info, resolved);
-    }, function (error) {
-      return _Promise.reject((0, _error.locatedError)(error, fieldASTs));
-    });
-  }
-
-  // If field type is NonNull, complete for inner type, and throw field error
-  // if result is null.
-  if (returnType instanceof _typeDefinition.GraphQLNonNull) {
-    var completed = completeValue(exeContext, returnType.ofType, fieldASTs, info, result);
-    if (completed === null) {
-      throw new _error.GraphQLError('Cannot return null for non-nullable ' + ('field ' + info.parentType + '.' + info.fieldName + '.'), fieldASTs);
-    }
-    return completed;
-  }
-
-  // If result is null-like, return null.
-  if ((0, _jsutilsIsNullish2['default'])(result)) {
-    return null;
-  }
-
-  // If field type is List, complete each item in the list with the inner type
-  if (returnType instanceof _typeDefinition.GraphQLList) {
-    (0, _jsutilsInvariant2['default'])(Array.isArray(result), 'User Error: expected iterable, but did not find one.');
-
-    // This is specified as a simple map, however we're optimizing the path
-    // where the list contains no Promises by avoiding creating another Promise.
-    var itemType = returnType.ofType;
-    var containsPromise = false;
-    var completedResults = result.map(function (item) {
-      var completedItem = completeValueCatchingError(exeContext, itemType, fieldASTs, info, item);
-      if (!containsPromise && isThenable(completedItem)) {
-        containsPromise = true;
-      }
-      return completedItem;
-    });
-
-    return containsPromise ? _Promise.all(completedResults) : completedResults;
-  }
-
-  // If field type is Scalar or Enum, serialize to a valid value, returning
-  // null if serialization is not possible.
-  if (returnType instanceof _typeDefinition.GraphQLScalarType || returnType instanceof _typeDefinition.GraphQLEnumType) {
-    (0, _jsutilsInvariant2['default'])(returnType.serialize, 'Missing serialize method on type');
-    var serializedResult = returnType.serialize(result);
-    return (0, _jsutilsIsNullish2['default'])(serializedResult) ? null : serializedResult;
-  }
-
-  // Field type must be Object, Interface or Union and expect sub-selections.
-  var objectType;
-
-  if (returnType instanceof _typeDefinition.GraphQLObjectType) {
-    objectType = returnType;
-  } else if ((0, _typeDefinition.isAbstractType)(returnType)) {
-    var abstractType = returnType;
-    objectType = abstractType.getObjectType(result, info);
-    if (objectType && !abstractType.isPossibleType(objectType)) {
-      throw new _error.GraphQLError('Runtime Object type "' + objectType + '" is not a possible type ' + ('for "' + abstractType + '".'), fieldASTs);
-    }
-  }
-
-  if (!objectType) {
-    return null;
-  }
-
-  // If there is an isTypeOf predicate function, call it with the
-  // current result. If isTypeOf returns false, then raise an error rather
-  // than continuing execution.
-  if (objectType.isTypeOf && !objectType.isTypeOf(result, info)) {
-    throw new _error.GraphQLError('Expected value of type "' + objectType + '" but got: ' + result + '.', fieldASTs);
-  }
-
-  // Collect sub-fields to execute to complete this value.
-  var subFieldASTs = {};
-  var visitedFragmentNames = {};
-  for (var i = 0; i < fieldASTs.length; i++) {
-    var selectionSet = fieldASTs[i].selectionSet;
-    if (selectionSet) {
-      subFieldASTs = collectFields(exeContext, objectType, selectionSet, subFieldASTs, visitedFragmentNames);
-    }
-  }
-
-  return executeFields(exeContext, objectType, result, subFieldASTs);
-}
-
-/**
- * If a resolve function is not given, then a default resolve behavior is used
- * which takes the property of the source object of the same name as the field
- * and returns it as the result, or if it's a function, returns the result
- * of calling that function.
- */
-function defaultResolveFn(source, args, _ref) {
-  var fieldName = _ref.fieldName;
-
-  var property = source[fieldName];
-  return typeof property === 'function' ? property.call(source) : property;
-}
-
-/**
- * Checks to see if this object acts like a Promise, i.e. has a "then"
- * function.
- */
-function isThenable(value) {
-  return value && typeof value === 'object' && typeof value.then === 'function';
-}
-
-/**
- * This method looks up the field on the given type defintion.
- * It has special casing for the two introspection fields, __schema
- * and __typename. __typename is special because it can always be
- * queried as a field, even in situations where no other fields
- * are allowed, like on a Union. __schema could get automatically
- * added to the query type, but that would require mutating type
- * definitions, which would cause issues.
- */
-function getFieldDef(schema, parentType, fieldName) {
-  if (fieldName === _typeIntrospection.SchemaMetaFieldDef.name && schema.getQueryType() === parentType) {
-    return _typeIntrospection.SchemaMetaFieldDef;
-  } else if (fieldName === _typeIntrospection.TypeMetaFieldDef.name && schema.getQueryType() === parentType) {
-    return _typeIntrospection.TypeMetaFieldDef;
-  } else if (fieldName === _typeIntrospection.TypeNameMetaFieldDef.name) {
-    return _typeIntrospection.TypeNameMetaFieldDef;
-  }
-  return parentType.getFields()[fieldName];
-}
-},{"../error":121,"../jsutils/find":128,"../jsutils/invariant":129,"../jsutils/isNullish":130,"../language":133,"../type/definition":144,"../type/directives":145,"../type/introspection":147,"../type/schema":149,"../utilities/typeFromAST":159,"./values":125,"babel-runtime/core-js/object/keys":16,"babel-runtime/core-js/promise":18,"babel-runtime/helpers/interop-require-default":24}],125:[function(require,module,exports){
-
-/**
- *  Copyright (c) 2015, Facebook, Inc.
- *  All rights reserved.
- *
- *  This source code is licensed under the BSD-style license found in the
- *  LICENSE file in the root directory of this source tree. An additional grant
- *  of patent rights can be found in the PATENTS file in the same directory.
- */
-
-/**
- * Prepares an object map of variableValues of the correct type based on the
- * provided variable definitions and arbitrary input. If the input cannot be
- * parsed to match the variable definitions, a GraphQLError will be thrown.
- */
-'use strict';
-
-var _Object$keys = require('babel-runtime/core-js/object/keys')['default'];
-
-var _interopRequireDefault = require('babel-runtime/helpers/interop-require-default')['default'];
-
-Object.defineProperty(exports, '__esModule', {
-  value: true
-});
-exports.getVariableValues = getVariableValues;
-exports.getArgumentValues = getArgumentValues;
-
-var _error = require('../error');
-
-var _jsutilsInvariant = require('../jsutils/invariant');
-
-var _jsutilsInvariant2 = _interopRequireDefault(_jsutilsInvariant);
-
-var _jsutilsIsNullish = require('../jsutils/isNullish');
-
-var _jsutilsIsNullish2 = _interopRequireDefault(_jsutilsIsNullish);
-
-var _jsutilsKeyMap = require('../jsutils/keyMap');
-
-var _jsutilsKeyMap2 = _interopRequireDefault(_jsutilsKeyMap);
-
-var _utilitiesTypeFromAST = require('../utilities/typeFromAST');
-
-var _utilitiesValueFromAST = require('../utilities/valueFromAST');
-
-var _utilitiesIsValidJSValue = require('../utilities/isValidJSValue');
-
-var _languagePrinter = require('../language/printer');
-
-var _typeDefinition = require('../type/definition');
-
-function getVariableValues(schema, definitionASTs, inputs) {
-  return definitionASTs.reduce(function (values, defAST) {
-    var varName = defAST.variable.name.value;
-    values[varName] = getVariableValue(schema, defAST, inputs[varName]);
-    return values;
-  }, {});
-}
-
-/**
- * Prepares an object map of argument values given a list of argument
- * definitions and list of argument AST nodes.
- */
-
-function getArgumentValues(argDefs, argASTs, variableValues) {
-  if (!argDefs || !argASTs) {
-    return {};
-  }
-  var argASTMap = (0, _jsutilsKeyMap2['default'])(argASTs, function (arg) {
-    return arg.name.value;
-  });
-  return argDefs.reduce(function (result, argDef) {
-    var name = argDef.name;
-    var valueAST = argASTMap[name] ? argASTMap[name].value : null;
-    var value = (0, _utilitiesValueFromAST.valueFromAST)(valueAST, argDef.type, variableValues);
-    if ((0, _jsutilsIsNullish2['default'])(value)) {
-      value = argDef.defaultValue;
-    }
-    if (!(0, _jsutilsIsNullish2['default'])(value)) {
-      result[name] = value;
-    }
-    return result;
-  }, {});
-}
-
-/**
- * Given a variable definition, and any value of input, return a value which
- * adheres to the variable definition, or throw an error.
- */
-function getVariableValue(schema, definitionAST, input) {
-  var type = (0, _utilitiesTypeFromAST.typeFromAST)(schema, definitionAST.type);
-  var variable = definitionAST.variable;
-  if (!type || !(0, _typeDefinition.isInputType)(type)) {
-    throw new _error.GraphQLError('Variable "$' + variable.name.value + '" expected value of type ' + ('"' + (0, _languagePrinter.print)(definitionAST.type) + '" which cannot be used as an input type.'), [definitionAST]);
-  }
-  if ((0, _utilitiesIsValidJSValue.isValidJSValue)(input, type)) {
-    if ((0, _jsutilsIsNullish2['default'])(input)) {
-      var defaultValue = definitionAST.defaultValue;
-      if (defaultValue) {
-        return (0, _utilitiesValueFromAST.valueFromAST)(defaultValue, type);
-      }
-    }
-    return coerceValue(type, input);
-  }
-  if ((0, _jsutilsIsNullish2['default'])(input)) {
-    throw new _error.GraphQLError('Variable "$' + variable.name.value + '" of required type ' + ('"' + (0, _languagePrinter.print)(definitionAST.type) + '" was not provided.'), [definitionAST]);
-  }
-  throw new _error.GraphQLError('Variable "$' + variable.name.value + '" expected value of type ' + ('"' + (0, _languagePrinter.print)(definitionAST.type) + '" but got: ' + JSON.stringify(input) + '.'), [definitionAST]);
-}
-
-/**
- * Given a type and any value, return a runtime value coerced to match the type.
- */
-function coerceValue(_x, _x2) {
-  var _again = true;
-
-  _function: while (_again) {
-    var type = _x,
-        value = _x2;
-    nullableType = itemType = fields = parsed = undefined;
-    _again = false;
-
-    if (type instanceof _typeDefinition.GraphQLNonNull) {
-      // Note: we're not checking that the result of coerceValue is non-null.
-
-      var nullableType = type.ofType;
-      _x = nullableType;
-      _x2 = value;
-      _again = true;
-      continue _function;
-    }
-
-    if ((0, _jsutilsIsNullish2['default'])(value)) {
-      return null;
-    }
-
-    if (type instanceof _typeDefinition.GraphQLList) {
-      var itemType = type.ofType;
-      // TODO: support iterable input
-      if (Array.isArray(value)) {
-        return value.map(function (item) {
-          return coerceValue(itemType, item);
-        });
-      }
-      return [coerceValue(itemType, value)];
-    }
-
-    if (type instanceof _typeDefinition.GraphQLInputObjectType) {
-      var fields = type.getFields();
-      return _Object$keys(fields).reduce(function (obj, fieldName) {
-        var field = fields[fieldName];
-        var fieldValue = coerceValue(field.type, value[fieldName]);
-        if ((0, _jsutilsIsNullish2['default'])(fieldValue)) {
-          fieldValue = field.defaultValue;
-        }
-        if (!(0, _jsutilsIsNullish2['default'])(fieldValue)) {
-          obj[fieldName] = fieldValue;
-        }
-        return obj;
-      }, {});
-    }
-
-    (0, _jsutilsInvariant2['default'])(type instanceof _typeDefinition.GraphQLScalarType || type instanceof _typeDefinition.GraphQLEnumType, 'Must be input type');
-
-    var parsed = type.parseValue(value);
-    if (!(0, _jsutilsIsNullish2['default'])(parsed)) {
-      return parsed;
-    }
-  }
-}
-// We only call this function after calling isValidJSValue.
-},{"../error":121,"../jsutils/invariant":129,"../jsutils/isNullish":130,"../jsutils/keyMap":131,"../language/printer":139,"../type/definition":144,"../utilities/isValidJSValue":156,"../utilities/typeFromAST":159,"../utilities/valueFromAST":160,"babel-runtime/core-js/object/keys":16,"babel-runtime/helpers/interop-require-default":24}],126:[function(require,module,exports){
-
-/**
- *  Copyright (c) 2015, Facebook, Inc.
- *  All rights reserved.
- *
- *  This source code is licensed under the BSD-style license found in the
- *  LICENSE file in the root directory of this source tree. An additional grant
- *  of patent rights can be found in the PATENTS file in the same directory.
- */
-
-/**
- * This is the primary entry point function for fulfilling GraphQL operations
- * by parsing, validating, and executing a GraphQL document along side a
- * GraphQL schema.
- *
- * More sophisticated GraphQL servers, such as those which persist queries,
- * may wish to separate the validation and execution phases to a static time
- * tooling step, and a server runtime step.
- */
-'use strict';
-
-var _Promise = require('babel-runtime/core-js/promise')['default'];
-
-Object.defineProperty(exports, '__esModule', {
-  value: true
-});
-exports.graphql = graphql;
-
-/**
- * The result of a GraphQL parse, validation and execution.
- *
- * `data` is the result of a successful execution of the query.
- * `errors` is included when any errors occurred as a non-empty array.
- */
-
-var _languageSource = require('./language/source');
-
-var _languageParser = require('./language/parser');
-
-var _validationValidate = require('./validation/validate');
-
-var _executionExecute = require('./execution/execute');
-
-function graphql(schema, requestString, rootValue, variableValues, operationName) {
-  return new _Promise(function (resolve) {
-    var source = new _languageSource.Source(requestString || '', 'GraphQL request');
-    var documentAST = (0, _languageParser.parse)(source);
-    var validationErrors = (0, _validationValidate.validate)(schema, documentAST);
-    if (validationErrors.length > 0) {
-      resolve({ errors: validationErrors });
-    } else {
-      resolve((0, _executionExecute.execute)(schema, documentAST, rootValue, variableValues, operationName));
-    }
-  })['catch'](function (error) {
-    return { errors: [error] };
-  });
-}
-},{"./execution/execute":124,"./language/parser":137,"./language/source":142,"./validation/validate":185,"babel-runtime/core-js/promise":18}],127:[function(require,module,exports){
-/**
- *  Copyright (c) 2015, Facebook, Inc.
- *  All rights reserved.
- *
- *  This source code is licensed under the BSD-style license found in the
- *  LICENSE file in the root directory of this source tree. An additional grant
- *  of patent rights can be found in the PATENTS file in the same directory.
- */
-
-// The primary entry point into fulfilling a GraphQL request.
-'use strict';
-
-Object.defineProperty(exports, '__esModule', {
-  value: true
-});
-
-var _graphql = require('./graphql');
-
-Object.defineProperty(exports, 'graphql', {
-  enumerable: true,
-  get: function get() {
-    return _graphql.graphql;
-  }
-});
-
-// Produce a GraphQL type schema.
-
-var _typeSchema = require('./type/schema');
-
-Object.defineProperty(exports, 'GraphQLSchema', {
-  enumerable: true,
-  get: function get() {
-    return _typeSchema.GraphQLSchema;
-  }
-});
-
-// Define GraphQL types.
-
-var _typeDefinition = require('./type/definition');
-
-Object.defineProperty(exports, 'GraphQLScalarType', {
-  enumerable: true,
-  get: function get() {
-    return _typeDefinition.GraphQLScalarType;
-  }
-});
-Object.defineProperty(exports, 'GraphQLObjectType', {
-  enumerable: true,
-  get: function get() {
-    return _typeDefinition.GraphQLObjectType;
-  }
-});
-Object.defineProperty(exports, 'GraphQLInterfaceType', {
-  enumerable: true,
-  get: function get() {
-    return _typeDefinition.GraphQLInterfaceType;
-  }
-});
-Object.defineProperty(exports, 'GraphQLUnionType', {
-  enumerable: true,
-  get: function get() {
-    return _typeDefinition.GraphQLUnionType;
-  }
-});
-Object.defineProperty(exports, 'GraphQLEnumType', {
-  enumerable: true,
-  get: function get() {
-    return _typeDefinition.GraphQLEnumType;
-  }
-});
-Object.defineProperty(exports, 'GraphQLInputObjectType', {
-  enumerable: true,
-  get: function get() {
-    return _typeDefinition.GraphQLInputObjectType;
-  }
-});
-Object.defineProperty(exports, 'GraphQLList', {
-  enumerable: true,
-  get: function get() {
-    return _typeDefinition.GraphQLList;
-  }
-});
-Object.defineProperty(exports, 'GraphQLNonNull', {
-  enumerable: true,
-  get: function get() {
-    return _typeDefinition.GraphQLNonNull;
-  }
-});
-
-// Use pre-defined GraphQL scalar types.
-
-var _typeScalars = require('./type/scalars');
-
-Object.defineProperty(exports, 'GraphQLInt', {
-  enumerable: true,
-  get: function get() {
-    return _typeScalars.GraphQLInt;
-  }
-});
-Object.defineProperty(exports, 'GraphQLFloat', {
-  enumerable: true,
-  get: function get() {
-    return _typeScalars.GraphQLFloat;
-  }
-});
-Object.defineProperty(exports, 'GraphQLString', {
-  enumerable: true,
-  get: function get() {
-    return _typeScalars.GraphQLString;
-  }
-});
-Object.defineProperty(exports, 'GraphQLBoolean', {
-  enumerable: true,
-  get: function get() {
-    return _typeScalars.GraphQLBoolean;
-  }
-});
-Object.defineProperty(exports, 'GraphQLID', {
-  enumerable: true,
-  get: function get() {
-    return _typeScalars.GraphQLID;
-  }
-});
-
-// Format GraphQL errors.
-
-var _errorFormatError = require('./error/formatError');
-
-Object.defineProperty(exports, 'formatError', {
-  enumerable: true,
-  get: function get() {
-    return _errorFormatError.formatError;
-  }
-});
-},{"./error/formatError":120,"./graphql":126,"./type/definition":144,"./type/scalars":148,"./type/schema":149}],128:[function(require,module,exports){
+},{"../language/location":131,"./GraphQLError":118}],123:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -17058,7 +16674,7 @@ function find(list, predicate) {
 }
 
 module.exports = exports["default"];
-},{}],129:[function(require,module,exports){
+},{}],124:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -17083,7 +16699,7 @@ function invariant(condition, message) {
 }
 
 module.exports = exports["default"];
-},{}],130:[function(require,module,exports){
+},{}],125:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -17109,7 +16725,7 @@ function isNullish(value) {
 }
 
 module.exports = exports["default"];
-},{}],131:[function(require,module,exports){
+},{}],126:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -17157,7 +16773,7 @@ function keyMap(list, keyFn) {
 }
 
 module.exports = exports["default"];
-},{}],132:[function(require,module,exports){
+},{}],127:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -17199,7 +16815,7 @@ function keyValMap(list, keyFn, valFn) {
 }
 
 module.exports = exports["default"];
-},{}],133:[function(require,module,exports){
+},{}],128:[function(require,module,exports){
 /**
  *  Copyright (c) 2015, Facebook, Inc.
  *  All rights reserved.
@@ -17287,7 +16903,7 @@ Object.defineProperty(exports, 'BREAK', {
     return _visitor.BREAK;
   }
 });
-},{"./kinds":134,"./lexer":135,"./location":136,"./parser":137,"./printer":139,"./source":142,"./visitor":143,"babel-runtime/helpers/interop-require-wildcard":25}],134:[function(require,module,exports){
+},{"./kinds":129,"./lexer":130,"./location":131,"./parser":132,"./printer":133,"./source":134,"./visitor":135,"babel-runtime/helpers/interop-require-wildcard":29}],129:[function(require,module,exports){
 /**
  *  Copyright (c) 2015, Facebook, Inc.
  *  All rights reserved.
@@ -17364,8 +16980,31 @@ exports.NAMED_TYPE = NAMED_TYPE;
 var LIST_TYPE = 'ListType';
 exports.LIST_TYPE = LIST_TYPE;
 var NON_NULL_TYPE = 'NonNullType';
+
 exports.NON_NULL_TYPE = NON_NULL_TYPE;
-},{}],135:[function(require,module,exports){
+// Type Definitions
+
+var OBJECT_TYPE_DEFINITION = 'ObjectTypeDefinition';
+exports.OBJECT_TYPE_DEFINITION = OBJECT_TYPE_DEFINITION;
+var FIELD_DEFINITION = 'FieldDefinition';
+exports.FIELD_DEFINITION = FIELD_DEFINITION;
+var INPUT_VALUE_DEFINITION = 'InputValueDefinition';
+exports.INPUT_VALUE_DEFINITION = INPUT_VALUE_DEFINITION;
+var INTERFACE_TYPE_DEFINITION = 'InterfaceTypeDefinition';
+exports.INTERFACE_TYPE_DEFINITION = INTERFACE_TYPE_DEFINITION;
+var UNION_TYPE_DEFINITION = 'UnionTypeDefinition';
+exports.UNION_TYPE_DEFINITION = UNION_TYPE_DEFINITION;
+var SCALAR_TYPE_DEFINITION = 'ScalarTypeDefinition';
+exports.SCALAR_TYPE_DEFINITION = SCALAR_TYPE_DEFINITION;
+var ENUM_TYPE_DEFINITION = 'EnumTypeDefinition';
+exports.ENUM_TYPE_DEFINITION = ENUM_TYPE_DEFINITION;
+var ENUM_VALUE_DEFINITION = 'EnumValueDefinition';
+exports.ENUM_VALUE_DEFINITION = ENUM_VALUE_DEFINITION;
+var INPUT_OBJECT_TYPE_DEFINITION = 'InputObjectTypeDefinition';
+exports.INPUT_OBJECT_TYPE_DEFINITION = INPUT_OBJECT_TYPE_DEFINITION;
+var TYPE_EXTENSION_DEFINITION = 'TypeExtensionDefinition';
+exports.TYPE_EXTENSION_DEFINITION = TYPE_EXTENSION_DEFINITION;
+},{}],130:[function(require,module,exports){
 /*  /
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -17476,7 +17115,6 @@ tokenDescription[TokenKind.FLOAT] = 'Float';
 tokenDescription[TokenKind.STRING] = 'String';
 
 var charCodeAt = String.prototype.charCodeAt;
-var fromCharCode = String.fromCharCode;
 var slice = String.prototype.slice;
 
 /**
@@ -17484,6 +17122,17 @@ var slice = String.prototype.slice;
  */
 function makeToken(kind, start, end, value) {
   return { kind: kind, start: start, end: end, value: value };
+}
+
+function printCharCode(code) {
+  return(
+    // NaN/undefined represents access beyond the end of the file.
+    isNaN(code) ? '<EOF>' :
+    // Trust JSON for ASCII.
+    code < 0x007F ? JSON.stringify(String.fromCharCode(code)) :
+    // Otherwise print the escaped form.
+    '"\\u' + ('00' + code.toString(16).toUpperCase()).slice(-4) + '"'
+  );
 }
 
 /**
@@ -17498,10 +17147,16 @@ function readToken(source, fromPosition) {
   var bodyLength = body.length;
 
   var position = positionAfterWhitespace(body, fromPosition);
-  var code = charCodeAt.call(body, position);
 
   if (position >= bodyLength) {
     return makeToken(TokenKind.EOF, position, position);
+  }
+
+  var code = charCodeAt.call(body, position);
+
+  // SourceCharacter
+  if (code < 0x0020 && code !== 0x0009 && code !== 0x000A && code !== 0x000D) {
+    throw (0, _error.syntaxError)(source, position, 'Invalid character ' + printCharCode(code) + '.');
   }
 
   switch (code) {
@@ -17571,7 +17226,7 @@ function readToken(source, fromPosition) {
       return readString(source, position);
   }
 
-  throw (0, _error.syntaxError)(source, position, 'Unexpected character "' + fromCharCode(code) + '".');
+  throw (0, _error.syntaxError)(source, position, 'Unexpected character ' + printCharCode(code) + '.');
 }
 
 /**
@@ -17584,20 +17239,26 @@ function positionAfterWhitespace(body, startPosition) {
   var position = startPosition;
   while (position < bodyLength) {
     var code = charCodeAt.call(body, position);
-    // Skip whitespace
-    if (code === 32 || // space
-    code === 44 || // comma
-    code === 160 || // '\xa0'
-    code === 0x2028 || // line separator
-    code === 0x2029 || // paragraph separator
-    code > 8 && code < 14 // whitespace
-    ) {
-        ++position;
-        // Skip comments
-      } else if (code === 35) {
+    // Skip Ignored
+    if (
+    // BOM
+    code === 0xFEFF ||
+    // White Space
+    code === 0x0009 || // tab
+    code === 0x0020 || // space
+    // Line Terminator
+    code === 0x000A || // new line
+    code === 0x000D || // carriage return
+    // Comma
+    code === 0x002C) {
+      ++position;
+      // Skip comments
+    } else if (code === 35) {
         // #
         ++position;
-        while (position < bodyLength && (code = charCodeAt.call(body, position)) && code !== 10 && code !== 13 && code !== 0x2028 && code !== 0x2029) {
+        while (position < bodyLength && (code = charCodeAt.call(body, position)) !== null && (
+        // SourceCharacter but not LineTerminator
+        code > 0x001F || code === 0x0009) && code !== 0x000A && code !== 0x000D) {
           ++position;
         }
       } else {
@@ -17628,28 +17289,21 @@ function readNumber(source, start, firstCode) {
   if (code === 48) {
     // 0
     code = charCodeAt.call(body, ++position);
-  } else if (code >= 49 && code <= 57) {
-    // 1 - 9
-    do {
-      code = charCodeAt.call(body, ++position);
-    } while (code >= 48 && code <= 57); // 0 - 9
-  } else {
-      throw (0, _error.syntaxError)(source, position, 'Invalid number.');
+    if (code >= 48 && code <= 57) {
+      throw (0, _error.syntaxError)(source, position, 'Invalid number, unexpected digit after 0: ' + printCharCode(code) + '.');
     }
+  } else {
+    position = readDigits(source, position, code);
+    code = charCodeAt.call(body, position);
+  }
 
   if (code === 46) {
     // .
     isFloat = true;
 
     code = charCodeAt.call(body, ++position);
-    if (code >= 48 && code <= 57) {
-      // 0 - 9
-      do {
-        code = charCodeAt.call(body, ++position);
-      } while (code >= 48 && code <= 57); // 0 - 9
-    } else {
-        throw (0, _error.syntaxError)(source, position, 'Invalid number.');
-      }
+    position = readDigits(source, position, code);
+    code = charCodeAt.call(body, position);
   }
 
   if (code === 69 || code === 101) {
@@ -17661,17 +17315,27 @@ function readNumber(source, start, firstCode) {
       // + -
       code = charCodeAt.call(body, ++position);
     }
-    if (code >= 48 && code <= 57) {
-      // 0 - 9
-      do {
-        code = charCodeAt.call(body, ++position);
-      } while (code >= 48 && code <= 57); // 0 - 9
-    } else {
-        throw (0, _error.syntaxError)(source, position, 'Invalid number.');
-      }
+    position = readDigits(source, position, code);
   }
 
   return makeToken(isFloat ? TokenKind.FLOAT : TokenKind.INT, start, position, slice.call(body, start, position));
+}
+
+/**
+ * Returns the new position in the source after reading digits.
+ */
+function readDigits(source, start, firstCode) {
+  var body = source.body;
+  var position = start;
+  var code = firstCode;
+  if (code >= 48 && code <= 57) {
+    // 0 - 9
+    do {
+      code = charCodeAt.call(body, ++position);
+    } while (code >= 48 && code <= 57); // 0 - 9
+    return position;
+  }
+  throw (0, _error.syntaxError)(source, position, 'Invalid number, expected digit but got: ' + printCharCode(code) + '.');
 }
 
 /**
@@ -17683,10 +17347,19 @@ function readString(source, start) {
   var body = source.body;
   var position = start + 1;
   var chunkStart = position;
-  var code;
+  var code = 0;
   var value = '';
 
-  while (position < body.length && (code = charCodeAt.call(body, position)) && code !== 34 && code !== 10 && code !== 13 && code !== 0x2028 && code !== 0x2029) {
+  while (position < body.length && (code = charCodeAt.call(body, position)) !== null &&
+  // not LineTerminator
+  code !== 0x000A && code !== 0x000D &&
+  // not Quote (")
+  code !== 34) {
+    // SourceCharacter
+    if (code < 0x0020 && code !== 0x0009) {
+      throw (0, _error.syntaxError)(source, position, 'Invalid character within String: ' + printCharCode(code) + '.');
+    }
+
     ++position;
     if (code === 92) {
       // \
@@ -17710,15 +17383,16 @@ function readString(source, start) {
         case 116:
           value += '\t';break;
         case 117:
+          // u
           var charCode = uniCharCode(charCodeAt.call(body, position + 1), charCodeAt.call(body, position + 2), charCodeAt.call(body, position + 3), charCodeAt.call(body, position + 4));
           if (charCode < 0) {
-            throw (0, _error.syntaxError)(source, position, 'Bad character escape sequence.');
+            throw (0, _error.syntaxError)(source, position, 'Invalid character escape sequence: ' + ('\\u' + body.slice(position + 1, position + 5) + '.'));
           }
-          value += fromCharCode(charCode);
+          value += String.fromCharCode(charCode);
           position += 4;
           break;
         default:
-          throw (0, _error.syntaxError)(source, position, 'Bad character escape sequence.');
+          throw (0, _error.syntaxError)(source, position, 'Invalid character escape sequence: \\' + String.fromCharCode(code) + '.');
       }
       ++position;
       chunkStart = position;
@@ -17726,6 +17400,7 @@ function readString(source, start) {
   }
 
   if (code !== 34) {
+    // quote (")
     throw (0, _error.syntaxError)(source, position, 'Unterminated string.');
   }
 
@@ -17771,8 +17446,8 @@ function readName(source, position) {
   var body = source.body;
   var bodyLength = body.length;
   var end = position + 1;
-  var code;
-  while (end !== bodyLength && (code = charCodeAt.call(body, end)) && (code === 95 || // _
+  var code = 0;
+  while (end !== bodyLength && (code = charCodeAt.call(body, end)) !== null && (code === 95 || // _
   code >= 48 && code <= 57 || // 0-9
   code >= 65 && code <= 90 || // A-Z
   code >= 97 && code <= 122) // a-z
@@ -17781,7 +17456,7 @@ function readName(source, position) {
   }
   return makeToken(TokenKind.NAME, position, end, slice.call(body, position, end));
 }
-},{"../error":121}],136:[function(require,module,exports){
+},{"../error":120}],131:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -17818,7 +17493,7 @@ function getLocation(source, position) {
   }
   return { line: line, column: column };
 }
-},{}],137:[function(require,module,exports){
+},{}],132:[function(require,module,exports){
 /**
  *  Copyright (c) 2015, Facebook, Inc.
  *  All rights reserved.
@@ -17830,12 +17505,14 @@ function getLocation(source, position) {
 
 'use strict';
 
+/**
+ * Configuration options to control parser behavior
+ */
 Object.defineProperty(exports, '__esModule', {
   value: true
 });
 exports.parse = parse;
 exports.parseValue = parseValue;
-exports.parseName = parseName;
 exports.parseConstValue = parseConstValue;
 exports.parseType = parseType;
 exports.parseNamedType = parseNamedType;
@@ -17848,8 +17525,6 @@ var _lexer = require('./lexer');
 
 var _kinds = require('./kinds');
 
-var _parserCore = require('./parserCore');
-
 /**
  * Given a GraphQL source, parses it into a Document.
  * Throws GraphQLError if a syntax error is encountered.
@@ -17857,7 +17532,7 @@ var _parserCore = require('./parserCore');
 
 function parse(source, options) {
   var sourceObj = source instanceof _source.Source ? source : new _source.Source(source);
-  var parser = (0, _parserCore.makeParser)(sourceObj, options || {});
+  var parser = makeParser(sourceObj, options || {});
   return parseDocument(parser);
 }
 
@@ -17871,55 +17546,90 @@ function parse(source, options) {
 
 function parseValue(source, options) {
   var sourceObj = source instanceof _source.Source ? source : new _source.Source(source);
-  var parser = (0, _parserCore.makeParser)(sourceObj, options || {});
+  var parser = makeParser(sourceObj, options || {});
   return parseValueLiteral(parser);
 }
 
 /**
  * Converts a name lex token into a name parse node.
  */
-
 function parseName(parser) {
-  var token = (0, _parserCore.expect)(parser, _lexer.TokenKind.NAME);
+  var token = expect(parser, _lexer.TokenKind.NAME);
   return {
     kind: _kinds.NAME,
     value: token.value,
-    loc: (0, _parserCore.loc)(parser, token.start)
+    loc: loc(parser, token.start)
   };
 }
 
 // Implements the parsing rules in the Document section.
 
+/**
+ * Document : Definition+
+ */
 function parseDocument(parser) {
   var start = parser.token.start;
+
   var definitions = [];
   do {
-    if ((0, _parserCore.peek)(parser, _lexer.TokenKind.BRACE_L)) {
-      definitions.push(parseOperationDefinition(parser));
-    } else if ((0, _parserCore.peek)(parser, _lexer.TokenKind.NAME)) {
-      if (parser.token.value === 'query' || parser.token.value === 'mutation') {
-        definitions.push(parseOperationDefinition(parser));
-      } else if (parser.token.value === 'fragment') {
-        definitions.push(parseFragmentDefinition(parser));
-      } else {
-        throw (0, _parserCore.unexpected)(parser);
-      }
-    } else {
-      throw (0, _parserCore.unexpected)(parser);
-    }
-  } while (!(0, _parserCore.skip)(parser, _lexer.TokenKind.EOF));
+    definitions.push(parseDefinition(parser));
+  } while (!skip(parser, _lexer.TokenKind.EOF));
+
   return {
     kind: _kinds.DOCUMENT,
     definitions: definitions,
-    loc: (0, _parserCore.loc)(parser, start)
+    loc: loc(parser, start)
   };
+}
+
+/**
+ * Definition :
+ *   - OperationDefinition
+ *   - FragmentDefinition
+ *   - TypeDefinition
+ */
+function parseDefinition(parser) {
+  if (peek(parser, _lexer.TokenKind.BRACE_L)) {
+    return parseOperationDefinition(parser);
+  }
+
+  if (peek(parser, _lexer.TokenKind.NAME)) {
+    switch (parser.token.value) {
+      case 'query':
+      case 'mutation':
+      // Note: subscription is an experimental non-spec addition.
+      case 'subscription':
+        return parseOperationDefinition(parser);
+
+      case 'fragment':
+        return parseFragmentDefinition(parser);
+
+      case 'type':
+      case 'interface':
+      case 'union':
+      case 'scalar':
+      case 'enum':
+      case 'input':
+      case 'extend':
+        return parseTypeDefinition(parser);
+    }
+  }
+
+  throw unexpected(parser);
 }
 
 // Implements the parsing rules in the Operations section.
 
+/**
+ * OperationDefinition :
+ *  - SelectionSet
+ *  - OperationType Name? VariableDefinitions? Directives? SelectionSet
+ *
+ * OperationType : one of query mutation
+ */
 function parseOperationDefinition(parser) {
   var start = parser.token.start;
-  if ((0, _parserCore.peek)(parser, _lexer.TokenKind.BRACE_L)) {
+  if (peek(parser, _lexer.TokenKind.BRACE_L)) {
     return {
       kind: _kinds.OPERATION_DEFINITION,
       operation: 'query',
@@ -17927,62 +17637,86 @@ function parseOperationDefinition(parser) {
       variableDefinitions: null,
       directives: [],
       selectionSet: parseSelectionSet(parser),
-      loc: (0, _parserCore.loc)(parser, start)
+      loc: loc(parser, start)
     };
   }
-  var operationToken = (0, _parserCore.expect)(parser, _lexer.TokenKind.NAME);
+  var operationToken = expect(parser, _lexer.TokenKind.NAME);
   var operation = operationToken.value;
+  var name;
+  if (peek(parser, _lexer.TokenKind.NAME)) {
+    name = parseName(parser);
+  }
   return {
     kind: _kinds.OPERATION_DEFINITION,
     operation: operation,
-    name: parseName(parser),
+    name: name,
     variableDefinitions: parseVariableDefinitions(parser),
     directives: parseDirectives(parser),
     selectionSet: parseSelectionSet(parser),
-    loc: (0, _parserCore.loc)(parser, start)
+    loc: loc(parser, start)
   };
 }
 
+/**
+ * VariableDefinitions : ( VariableDefinition+ )
+ */
 function parseVariableDefinitions(parser) {
-  return (0, _parserCore.peek)(parser, _lexer.TokenKind.PAREN_L) ? (0, _parserCore.many)(parser, _lexer.TokenKind.PAREN_L, parseVariableDefinition, _lexer.TokenKind.PAREN_R) : [];
+  return peek(parser, _lexer.TokenKind.PAREN_L) ? many(parser, _lexer.TokenKind.PAREN_L, parseVariableDefinition, _lexer.TokenKind.PAREN_R) : [];
 }
 
+/**
+ * VariableDefinition : Variable : Type DefaultValue?
+ */
 function parseVariableDefinition(parser) {
   var start = parser.token.start;
   return {
     kind: _kinds.VARIABLE_DEFINITION,
     variable: parseVariable(parser),
-    type: ((0, _parserCore.expect)(parser, _lexer.TokenKind.COLON), parseType(parser)),
-    defaultValue: (0, _parserCore.skip)(parser, _lexer.TokenKind.EQUALS) ? parseValueLiteral(parser, true) : null,
-    loc: (0, _parserCore.loc)(parser, start)
+    type: (expect(parser, _lexer.TokenKind.COLON), parseType(parser)),
+    defaultValue: skip(parser, _lexer.TokenKind.EQUALS) ? parseValueLiteral(parser, true) : null,
+    loc: loc(parser, start)
   };
 }
 
+/**
+ * Variable : $ Name
+ */
 function parseVariable(parser) {
   var start = parser.token.start;
-  (0, _parserCore.expect)(parser, _lexer.TokenKind.DOLLAR);
+  expect(parser, _lexer.TokenKind.DOLLAR);
   return {
     kind: _kinds.VARIABLE,
     name: parseName(parser),
-    loc: (0, _parserCore.loc)(parser, start)
+    loc: loc(parser, start)
   };
 }
 
+/**
+ * SelectionSet : { Selection+ }
+ */
 function parseSelectionSet(parser) {
   var start = parser.token.start;
   return {
     kind: _kinds.SELECTION_SET,
-    selections: (0, _parserCore.many)(parser, _lexer.TokenKind.BRACE_L, parseSelection, _lexer.TokenKind.BRACE_R),
-    loc: (0, _parserCore.loc)(parser, start)
+    selections: many(parser, _lexer.TokenKind.BRACE_L, parseSelection, _lexer.TokenKind.BRACE_R),
+    loc: loc(parser, start)
   };
 }
 
+/**
+ * Selection :
+ *   - Field
+ *   - FragmentSpread
+ *   - InlineFragment
+ */
 function parseSelection(parser) {
-  return (0, _parserCore.peek)(parser, _lexer.TokenKind.SPREAD) ? parseFragment(parser) : parseField(parser);
+  return peek(parser, _lexer.TokenKind.SPREAD) ? parseFragment(parser) : parseField(parser);
 }
 
 /**
- * Corresponds to both Field and Alias in the spec
+ * Field : Alias? Name Arguments? Directives? SelectionSet?
+ *
+ * Alias : Name :
  */
 function parseField(parser) {
   var start = parser.token.start;
@@ -17990,7 +17724,7 @@ function parseField(parser) {
   var nameOrAlias = parseName(parser);
   var alias;
   var name;
-  if ((0, _parserCore.skip)(parser, _lexer.TokenKind.COLON)) {
+  if (skip(parser, _lexer.TokenKind.COLON)) {
     alias = nameOrAlias;
     name = parseName(parser);
   } else {
@@ -18004,81 +17738,111 @@ function parseField(parser) {
     name: name,
     arguments: parseArguments(parser),
     directives: parseDirectives(parser),
-    selectionSet: (0, _parserCore.peek)(parser, _lexer.TokenKind.BRACE_L) ? parseSelectionSet(parser) : null,
-    loc: (0, _parserCore.loc)(parser, start)
+    selectionSet: peek(parser, _lexer.TokenKind.BRACE_L) ? parseSelectionSet(parser) : null,
+    loc: loc(parser, start)
   };
 }
 
+/**
+ * Arguments : ( Argument+ )
+ */
 function parseArguments(parser) {
-  return (0, _parserCore.peek)(parser, _lexer.TokenKind.PAREN_L) ? (0, _parserCore.many)(parser, _lexer.TokenKind.PAREN_L, parseArgument, _lexer.TokenKind.PAREN_R) : [];
+  return peek(parser, _lexer.TokenKind.PAREN_L) ? many(parser, _lexer.TokenKind.PAREN_L, parseArgument, _lexer.TokenKind.PAREN_R) : [];
 }
 
+/**
+ * Argument : Name : Value
+ */
 function parseArgument(parser) {
   var start = parser.token.start;
   return {
     kind: _kinds.ARGUMENT,
     name: parseName(parser),
-    value: ((0, _parserCore.expect)(parser, _lexer.TokenKind.COLON), parseValueLiteral(parser, false)),
-    loc: (0, _parserCore.loc)(parser, start)
+    value: (expect(parser, _lexer.TokenKind.COLON), parseValueLiteral(parser, false)),
+    loc: loc(parser, start)
   };
 }
 
 // Implements the parsing rules in the Fragments section.
 
 /**
- * Corresponds to both FragmentSpread and InlineFragment in the spec
+ * Corresponds to both FragmentSpread and InlineFragment in the spec.
+ *
+ * FragmentSpread : ... FragmentName Directives?
+ *
+ * InlineFragment : ... TypeCondition? Directives? SelectionSet
  */
 function parseFragment(parser) {
   var start = parser.token.start;
-  (0, _parserCore.expect)(parser, _lexer.TokenKind.SPREAD);
-  if (parser.token.value === 'on') {
-    (0, _parserCore.advance)(parser);
+  expect(parser, _lexer.TokenKind.SPREAD);
+  if (peek(parser, _lexer.TokenKind.NAME) && parser.token.value !== 'on') {
     return {
-      kind: _kinds.INLINE_FRAGMENT,
-      typeCondition: parseNamedType(parser),
+      kind: _kinds.FRAGMENT_SPREAD,
+      name: parseFragmentName(parser),
       directives: parseDirectives(parser),
-      selectionSet: parseSelectionSet(parser),
-      loc: (0, _parserCore.loc)(parser, start)
+      loc: loc(parser, start)
     };
   }
+  var typeCondition = null;
+  if (parser.token.value === 'on') {
+    advance(parser);
+    typeCondition = parseNamedType(parser);
+  }
   return {
-    kind: _kinds.FRAGMENT_SPREAD,
-    name: parseFragmentName(parser),
+    kind: _kinds.INLINE_FRAGMENT,
+    typeCondition: typeCondition,
     directives: parseDirectives(parser),
-    loc: (0, _parserCore.loc)(parser, start)
+    selectionSet: parseSelectionSet(parser),
+    loc: loc(parser, start)
   };
 }
 
+/**
+ * FragmentDefinition :
+ *   - fragment FragmentName on TypeCondition Directives? SelectionSet
+ *
+ * TypeCondition : NamedType
+ */
+function parseFragmentDefinition(parser) {
+  var start = parser.token.start;
+  expectKeyword(parser, 'fragment');
+  return {
+    kind: _kinds.FRAGMENT_DEFINITION,
+    name: parseFragmentName(parser),
+    typeCondition: (expectKeyword(parser, 'on'), parseNamedType(parser)),
+    directives: parseDirectives(parser),
+    selectionSet: parseSelectionSet(parser),
+    loc: loc(parser, start)
+  };
+}
+
+/**
+ * FragmentName : Name but not `on`
+ */
 function parseFragmentName(parser) {
   if (parser.token.value === 'on') {
-    throw (0, _parserCore.unexpected)(parser);
+    throw unexpected(parser);
   }
   return parseName(parser);
 }
 
-function parseFragmentDefinition(parser) {
-  var start = parser.token.start;
-  (0, _parserCore.expectKeyword)(parser, 'fragment');
-  return {
-    kind: _kinds.FRAGMENT_DEFINITION,
-    name: parseFragmentName(parser),
-    typeCondition: ((0, _parserCore.expectKeyword)(parser, 'on'), parseNamedType(parser)),
-    directives: parseDirectives(parser),
-    selectionSet: parseSelectionSet(parser),
-    loc: (0, _parserCore.loc)(parser, start)
-  };
-}
-
 // Implements the parsing rules in the Values section.
 
-function parseConstValue(parser) {
-  return parseValueLiteral(parser, true);
-}
-
-function parseValueValue(parser) {
-  return parseValueLiteral(parser, false);
-}
-
+/**
+ * Value[Const] :
+ *   - [~Const] Variable
+ *   - IntValue
+ *   - FloatValue
+ *   - StringValue
+ *   - BooleanValue
+ *   - EnumValue
+ *   - ListValue[?Const]
+ *   - ObjectValue[?Const]
+ *
+ * BooleanValue : one of `true` `false`
+ *
+ * EnumValue : Name but not `true`, `false` or `null`
+ */
 function parseValueLiteral(parser, isConst) {
   var token = parser.token;
   switch (token.kind) {
@@ -18087,40 +17851,40 @@ function parseValueLiteral(parser, isConst) {
     case _lexer.TokenKind.BRACE_L:
       return parseObject(parser, isConst);
     case _lexer.TokenKind.INT:
-      (0, _parserCore.advance)(parser);
+      advance(parser);
       return {
         kind: _kinds.INT,
         value: token.value,
-        loc: (0, _parserCore.loc)(parser, token.start)
+        loc: loc(parser, token.start)
       };
     case _lexer.TokenKind.FLOAT:
-      (0, _parserCore.advance)(parser);
+      advance(parser);
       return {
         kind: _kinds.FLOAT,
         value: token.value,
-        loc: (0, _parserCore.loc)(parser, token.start)
+        loc: loc(parser, token.start)
       };
     case _lexer.TokenKind.STRING:
-      (0, _parserCore.advance)(parser);
+      advance(parser);
       return {
         kind: _kinds.STRING,
         value: token.value,
-        loc: (0, _parserCore.loc)(parser, token.start)
+        loc: loc(parser, token.start)
       };
     case _lexer.TokenKind.NAME:
       if (token.value === 'true' || token.value === 'false') {
-        (0, _parserCore.advance)(parser);
+        advance(parser);
         return {
           kind: _kinds.BOOLEAN,
           value: token.value === 'true',
-          loc: (0, _parserCore.loc)(parser, token.start)
+          loc: loc(parser, token.start)
         };
       } else if (token.value !== 'null') {
-        (0, _parserCore.advance)(parser);
+        advance(parser);
         return {
           kind: _kinds.ENUM,
           value: token.value,
-          loc: (0, _parserCore.loc)(parser, token.start)
+          loc: loc(parser, token.start)
         };
       }
       break;
@@ -18130,148 +17894,381 @@ function parseValueLiteral(parser, isConst) {
       }
       break;
   }
-  throw (0, _parserCore.unexpected)(parser);
+  throw unexpected(parser);
 }
 
+function parseConstValue(parser) {
+  return parseValueLiteral(parser, true);
+}
+
+function parseValueValue(parser) {
+  return parseValueLiteral(parser, false);
+}
+
+/**
+ * ListValue[Const] :
+ *   - [ ]
+ *   - [ Value[?Const]+ ]
+ */
 function parseList(parser, isConst) {
   var start = parser.token.start;
   var item = isConst ? parseConstValue : parseValueValue;
   return {
     kind: _kinds.LIST,
-    values: (0, _parserCore.any)(parser, _lexer.TokenKind.BRACKET_L, item, _lexer.TokenKind.BRACKET_R),
-    loc: (0, _parserCore.loc)(parser, start)
+    values: any(parser, _lexer.TokenKind.BRACKET_L, item, _lexer.TokenKind.BRACKET_R),
+    loc: loc(parser, start)
   };
 }
 
+/**
+ * ObjectValue[Const] :
+ *   - { }
+ *   - { ObjectField[?Const]+ }
+ */
 function parseObject(parser, isConst) {
   var start = parser.token.start;
-  (0, _parserCore.expect)(parser, _lexer.TokenKind.BRACE_L);
-  var fieldNames = {};
+  expect(parser, _lexer.TokenKind.BRACE_L);
   var fields = [];
-  while (!(0, _parserCore.skip)(parser, _lexer.TokenKind.BRACE_R)) {
-    fields.push(parseObjectField(parser, isConst, fieldNames));
+  while (!skip(parser, _lexer.TokenKind.BRACE_R)) {
+    fields.push(parseObjectField(parser, isConst));
   }
   return {
     kind: _kinds.OBJECT,
     fields: fields,
-    loc: (0, _parserCore.loc)(parser, start)
+    loc: loc(parser, start)
   };
 }
 
-function parseObjectField(parser, isConst, fieldNames) {
+/**
+ * ObjectField[Const] : Name : Value[?Const]
+ */
+function parseObjectField(parser, isConst) {
   var start = parser.token.start;
-  var name = parseName(parser);
-  if (fieldNames.hasOwnProperty(name.value)) {
-    throw (0, _error.syntaxError)(parser.source, start, 'Duplicate input object field ' + name.value + '.');
-  }
-  fieldNames[name.value] = true;
   return {
     kind: _kinds.OBJECT_FIELD,
-    name: name,
-    value: ((0, _parserCore.expect)(parser, _lexer.TokenKind.COLON), parseValueLiteral(parser, isConst)),
-    loc: (0, _parserCore.loc)(parser, start)
+    name: parseName(parser),
+    value: (expect(parser, _lexer.TokenKind.COLON), parseValueLiteral(parser, isConst)),
+    loc: loc(parser, start)
   };
 }
 
 // Implements the parsing rules in the Directives section.
 
+/**
+ * Directives : Directive+
+ */
 function parseDirectives(parser) {
   var directives = [];
-  while ((0, _parserCore.peek)(parser, _lexer.TokenKind.AT)) {
+  while (peek(parser, _lexer.TokenKind.AT)) {
     directives.push(parseDirective(parser));
   }
   return directives;
 }
 
+/**
+ * Directive : @ Name Arguments?
+ */
 function parseDirective(parser) {
   var start = parser.token.start;
-  (0, _parserCore.expect)(parser, _lexer.TokenKind.AT);
+  expect(parser, _lexer.TokenKind.AT);
   return {
     kind: _kinds.DIRECTIVE,
     name: parseName(parser),
     arguments: parseArguments(parser),
-    loc: (0, _parserCore.loc)(parser, start)
+    loc: loc(parser, start)
   };
 }
 
 // Implements the parsing rules in the Types section.
 
 /**
- * Handles the Type: NamedType, ListType, and NonNullType parsing rules.
+ * Type :
+ *   - NamedType
+ *   - ListType
+ *   - NonNullType
  */
 
 function parseType(parser) {
   var start = parser.token.start;
   var type;
-  if ((0, _parserCore.skip)(parser, _lexer.TokenKind.BRACKET_L)) {
+  if (skip(parser, _lexer.TokenKind.BRACKET_L)) {
     type = parseType(parser);
-    (0, _parserCore.expect)(parser, _lexer.TokenKind.BRACKET_R);
+    expect(parser, _lexer.TokenKind.BRACKET_R);
     type = {
       kind: _kinds.LIST_TYPE,
       type: type,
-      loc: (0, _parserCore.loc)(parser, start)
+      loc: loc(parser, start)
     };
   } else {
     type = parseNamedType(parser);
   }
-  if ((0, _parserCore.skip)(parser, _lexer.TokenKind.BANG)) {
+  if (skip(parser, _lexer.TokenKind.BANG)) {
     return {
       kind: _kinds.NON_NULL_TYPE,
       type: type,
-      loc: (0, _parserCore.loc)(parser, start)
+      loc: loc(parser, start)
     };
   }
   return type;
 }
+
+/**
+ * NamedType : Name
+ */
 
 function parseNamedType(parser) {
   var start = parser.token.start;
   return {
     kind: _kinds.NAMED_TYPE,
     name: parseName(parser),
-    loc: (0, _parserCore.loc)(parser, start)
+    loc: loc(parser, start)
   };
 }
-},{"../error":121,"./kinds":134,"./lexer":135,"./parserCore":138,"./source":142}],138:[function(require,module,exports){
+
+// Implements the parsing rules in the Type Definition section.
+
 /**
- *  Copyright (c) 2015, Facebook, Inc.
- *  All rights reserved.
- *
- *  This source code is licensed under the BSD-style license found in the
- *  LICENSE file in the root directory of this source tree. An additional grant
- *  of patent rights can be found in the PATENTS file in the same directory.
+ * TypeDefinition :
+ *   - ObjectTypeDefinition
+ *   - InterfaceTypeDefinition
+ *   - UnionTypeDefinition
+ *   - ScalarTypeDefinition
+ *   - EnumTypeDefinition
+ *   - InputObjectTypeDefinition
+ *   - TypeExtensionDefinition
  */
+function parseTypeDefinition(parser) {
+  if (!peek(parser, _lexer.TokenKind.NAME)) {
+    throw unexpected(parser);
+  }
+  switch (parser.token.value) {
+    case 'type':
+      return parseObjectTypeDefinition(parser);
+    case 'interface':
+      return parseInterfaceTypeDefinition(parser);
+    case 'union':
+      return parseUnionTypeDefinition(parser);
+    case 'scalar':
+      return parseScalarTypeDefinition(parser);
+    case 'enum':
+      return parseEnumTypeDefinition(parser);
+    case 'input':
+      return parseInputObjectTypeDefinition(parser);
+    case 'extend':
+      return parseTypeExtensionDefinition(parser);
+    default:
+      throw unexpected(parser);
+  }
+}
+
+/**
+ * ObjectTypeDefinition : type Name ImplementsInterfaces? { FieldDefinition+ }
+ */
+function parseObjectTypeDefinition(parser) {
+  var start = parser.token.start;
+  expectKeyword(parser, 'type');
+  var name = parseName(parser);
+  var interfaces = parseImplementsInterfaces(parser);
+  var fields = any(parser, _lexer.TokenKind.BRACE_L, parseFieldDefinition, _lexer.TokenKind.BRACE_R);
+  return {
+    kind: _kinds.OBJECT_TYPE_DEFINITION,
+    name: name,
+    interfaces: interfaces,
+    fields: fields,
+    loc: loc(parser, start)
+  };
+}
+
+/**
+ * ImplementsInterfaces : implements NamedType+
+ */
+function parseImplementsInterfaces(parser) {
+  var types = [];
+  if (parser.token.value === 'implements') {
+    advance(parser);
+    do {
+      types.push(parseNamedType(parser));
+    } while (!peek(parser, _lexer.TokenKind.BRACE_L));
+  }
+  return types;
+}
+
+/**
+ * FieldDefinition : Name ArgumentsDefinition? : Type
+ */
+function parseFieldDefinition(parser) {
+  var start = parser.token.start;
+  var name = parseName(parser);
+  var args = parseArgumentDefs(parser);
+  expect(parser, _lexer.TokenKind.COLON);
+  var type = parseType(parser);
+  return {
+    kind: _kinds.FIELD_DEFINITION,
+    name: name,
+    arguments: args,
+    type: type,
+    loc: loc(parser, start)
+  };
+}
+
+/**
+ * ArgumentsDefinition : ( InputValueDefinition+ )
+ */
+function parseArgumentDefs(parser) {
+  if (!peek(parser, _lexer.TokenKind.PAREN_L)) {
+    return [];
+  }
+  return many(parser, _lexer.TokenKind.PAREN_L, parseInputValueDef, _lexer.TokenKind.PAREN_R);
+}
+
+/**
+ * InputValueDefinition : Name : Type DefaultValue?
+ */
+function parseInputValueDef(parser) {
+  var start = parser.token.start;
+  var name = parseName(parser);
+  expect(parser, _lexer.TokenKind.COLON);
+  var type = parseType(parser, false);
+  var defaultValue = null;
+  if (skip(parser, _lexer.TokenKind.EQUALS)) {
+    defaultValue = parseConstValue(parser);
+  }
+  return {
+    kind: _kinds.INPUT_VALUE_DEFINITION,
+    name: name,
+    type: type,
+    defaultValue: defaultValue,
+    loc: loc(parser, start)
+  };
+}
+
+/**
+ * InterfaceTypeDefinition : interface Name { FieldDefinition+ }
+ */
+function parseInterfaceTypeDefinition(parser) {
+  var start = parser.token.start;
+  expectKeyword(parser, 'interface');
+  var name = parseName(parser);
+  var fields = any(parser, _lexer.TokenKind.BRACE_L, parseFieldDefinition, _lexer.TokenKind.BRACE_R);
+  return {
+    kind: _kinds.INTERFACE_TYPE_DEFINITION,
+    name: name,
+    fields: fields,
+    loc: loc(parser, start)
+  };
+}
+
+/**
+ * UnionTypeDefinition : union Name = UnionMembers
+ */
+function parseUnionTypeDefinition(parser) {
+  var start = parser.token.start;
+  expectKeyword(parser, 'union');
+  var name = parseName(parser);
+  expect(parser, _lexer.TokenKind.EQUALS);
+  var types = parseUnionMembers(parser);
+  return {
+    kind: _kinds.UNION_TYPE_DEFINITION,
+    name: name,
+    types: types,
+    loc: loc(parser, start)
+  };
+}
+
+/**
+ * UnionMembers :
+ *   - NamedType
+ *   - UnionMembers | NamedType
+ */
+function parseUnionMembers(parser) {
+  var members = [];
+  do {
+    members.push(parseNamedType(parser));
+  } while (skip(parser, _lexer.TokenKind.PIPE));
+  return members;
+}
+
+/**
+ * ScalarTypeDefinition : scalar Name
+ */
+function parseScalarTypeDefinition(parser) {
+  var start = parser.token.start;
+  expectKeyword(parser, 'scalar');
+  var name = parseName(parser);
+  return {
+    kind: _kinds.SCALAR_TYPE_DEFINITION,
+    name: name,
+    loc: loc(parser, start)
+  };
+}
+
+/**
+ * EnumTypeDefinition : enum Name { EnumValueDefinition+ }
+ */
+function parseEnumTypeDefinition(parser) {
+  var start = parser.token.start;
+  expectKeyword(parser, 'enum');
+  var name = parseName(parser);
+  var values = many(parser, _lexer.TokenKind.BRACE_L, parseEnumValueDefinition, _lexer.TokenKind.BRACE_R);
+  return {
+    kind: _kinds.ENUM_TYPE_DEFINITION,
+    name: name,
+    values: values,
+    loc: loc(parser, start)
+  };
+}
+
+/**
+ * EnumValueDefinition : EnumValue
+ *
+ * EnumValue : Name
+ */
+function parseEnumValueDefinition(parser) {
+  var start = parser.token.start;
+  var name = parseName(parser);
+  return {
+    kind: _kinds.ENUM_VALUE_DEFINITION,
+    name: name,
+    loc: loc(parser, start)
+  };
+}
+
+/**
+ * InputObjectTypeDefinition : input Name { InputValueDefinition+ }
+ */
+function parseInputObjectTypeDefinition(parser) {
+  var start = parser.token.start;
+  expectKeyword(parser, 'input');
+  var name = parseName(parser);
+  var fields = any(parser, _lexer.TokenKind.BRACE_L, parseInputValueDef, _lexer.TokenKind.BRACE_R);
+  return {
+    kind: _kinds.INPUT_OBJECT_TYPE_DEFINITION,
+    name: name,
+    fields: fields,
+    loc: loc(parser, start)
+  };
+}
+
+/**
+ * TypeExtensionDefinition : extend ObjectTypeDefinition
+ */
+function parseTypeExtensionDefinition(parser) {
+  var start = parser.token.start;
+  expectKeyword(parser, 'extend');
+  var definition = parseObjectTypeDefinition(parser);
+  return {
+    kind: _kinds.TYPE_EXTENSION_DEFINITION,
+    definition: definition,
+    loc: loc(parser, start)
+  };
+}
+
+// Core parsing utility functions
 
 /**
  * Returns the parser object that is used to store state throughout the
  * process of parsing.
  */
-'use strict';
-
-Object.defineProperty(exports, '__esModule', {
-  value: true
-});
-exports.makeParser = makeParser;
-
-/**
- * Configuration options to control parser behavior
- */
-exports.loc = loc;
-exports.advance = advance;
-exports.peek = peek;
-exports.skip = skip;
-exports.expect = expect;
-exports.expectKeyword = expectKeyword;
-exports.unexpected = unexpected;
-exports.any = any;
-exports.many = many;
-
-var _lexer = require('./lexer');
-
-var _source = require('./source');
-
-var _error = require('../error');
-
 function makeParser(source, options) {
   var _lexToken = (0, _lexer.lex)(source);
   return {
@@ -18287,7 +18284,6 @@ function makeParser(source, options) {
  * Returns a location object, used to identify the place in
  * the source that created a given parsed object.
  */
-
 function loc(parser, start) {
   if (parser.options.noLocation) {
     return null;
@@ -18301,7 +18297,6 @@ function loc(parser, start) {
 /**
  * Moves the internal parser object to the next lexed token.
  */
-
 function advance(parser) {
   var prevEnd = parser.token.end;
   parser.prevEnd = prevEnd;
@@ -18311,7 +18306,6 @@ function advance(parser) {
 /**
  * Determines if the next token is of a given kind
  */
-
 function peek(parser, kind) {
   return parser.token.kind === kind;
 }
@@ -18320,7 +18314,6 @@ function peek(parser, kind) {
  * If the next token is of the given kind, return true after advancing
  * the parser. Otherwise, do not change the parser state and return false.
  */
-
 function skip(parser, kind) {
   var match = parser.token.kind === kind;
   if (match) {
@@ -18333,7 +18326,6 @@ function skip(parser, kind) {
  * If the next token is of the given kind, return that token after advancing
  * the parser. Otherwise, do not change the parser state and return false.
  */
-
 function expect(parser, kind) {
   var token = parser.token;
   if (token.kind === kind) {
@@ -18348,7 +18340,6 @@ function expect(parser, kind) {
  * advancing the parser. Otherwise, do not change the parser state and return
  * false.
  */
-
 function expectKeyword(parser, value) {
   var token = parser.token;
   if (token.kind === _lexer.TokenKind.NAME && token.value === value) {
@@ -18359,10 +18350,9 @@ function expectKeyword(parser, value) {
 }
 
 /**
- * Helper export function for creating an error when an unexpected lexed token
+ * Helper function for creating an error when an unexpected lexed token
  * is encountered.
  */
-
 function unexpected(parser, atToken) {
   var token = atToken || parser.token;
   return (0, _error.syntaxError)(parser.source, token.start, 'Unexpected ' + (0, _lexer.getTokenDesc)(token));
@@ -18374,7 +18364,6 @@ function unexpected(parser, atToken) {
  * and ends with a lex token of closeKind. Advances the parser
  * to the next lex token after the closing token.
  */
-
 function any(parser, openKind, parseFn, closeKind) {
   expect(parser, openKind);
   var nodes = [];
@@ -18390,7 +18379,6 @@ function any(parser, openKind, parseFn, closeKind) {
  * and ends with a lex token of closeKind. Advances the parser
  * to the next lex token after the closing token.
  */
-
 function many(parser, openKind, parseFn, closeKind) {
   expect(parser, openKind);
   var nodes = [parseFn(parser)];
@@ -18411,7 +18399,7 @@ function many(parser, openKind, parseFn, closeKind) {
  * to the source that they were created from. This configuration flag
  * disables that behavior for performance or testing.
  */
-},{"../error":121,"./lexer":135,"./source":142}],139:[function(require,module,exports){
+},{"../error":120,"./kinds":129,"./lexer":130,"./source":134}],133:[function(require,module,exports){
 /**
  *  Copyright (c) 2015, Facebook, Inc.
  *  All rights reserved.
@@ -18427,9 +18415,6 @@ Object.defineProperty(exports, '__esModule', {
   value: true
 });
 exports.print = print;
-exports.join = join;
-exports.block = block;
-exports.wrap = wrap;
 
 var _visitor = require('./visitor');
 
@@ -18504,7 +18489,7 @@ var printDocASTReducer = {
     var typeCondition = _ref6.typeCondition;
     var directives = _ref6.directives;
     var selectionSet = _ref6.selectionSet;
-    return '... on ' + typeCondition + ' ' + wrap('', join(directives, ' '), ' ') + selectionSet;
+    return join(['...', wrap('on ', typeCondition), join(directives, ' '), selectionSet], ' ');
   },
 
   FragmentDefinition: function FragmentDefinition(_ref7) {
@@ -18572,15 +18557,75 @@ var printDocASTReducer = {
   NonNullType: function NonNullType(_ref19) {
     var type = _ref19.type;
     return type + '!';
+  },
+
+  // Type Definitions
+
+  ObjectTypeDefinition: function ObjectTypeDefinition(_ref20) {
+    var name = _ref20.name;
+    var interfaces = _ref20.interfaces;
+    var fields = _ref20.fields;
+    return 'type ' + name + ' ' + wrap('implements ', join(interfaces, ', '), ' ') + block(fields);
+  },
+
+  FieldDefinition: function FieldDefinition(_ref21) {
+    var name = _ref21.name;
+    var args = _ref21.arguments;
+    var type = _ref21.type;
+    return name + wrap('(', join(args, ', '), ')') + ': ' + type;
+  },
+
+  InputValueDefinition: function InputValueDefinition(_ref22) {
+    var name = _ref22.name;
+    var type = _ref22.type;
+    var defaultValue = _ref22.defaultValue;
+    return name + ': ' + type + wrap(' = ', defaultValue);
+  },
+
+  InterfaceTypeDefinition: function InterfaceTypeDefinition(_ref23) {
+    var name = _ref23.name;
+    var fields = _ref23.fields;
+    return 'interface ' + name + ' ' + block(fields);
+  },
+
+  UnionTypeDefinition: function UnionTypeDefinition(_ref24) {
+    var name = _ref24.name;
+    var types = _ref24.types;
+    return 'union ' + name + ' = ' + join(types, ' | ');
+  },
+
+  ScalarTypeDefinition: function ScalarTypeDefinition(_ref25) {
+    var name = _ref25.name;
+    return 'scalar ' + name;
+  },
+
+  EnumTypeDefinition: function EnumTypeDefinition(_ref26) {
+    var name = _ref26.name;
+    var values = _ref26.values;
+    return 'enum ' + name + ' ' + block(values);
+  },
+
+  EnumValueDefinition: function EnumValueDefinition(_ref27) {
+    var name = _ref27.name;
+    return name;
+  },
+
+  InputObjectTypeDefinition: function InputObjectTypeDefinition(_ref28) {
+    var name = _ref28.name;
+    var fields = _ref28.fields;
+    return 'input ' + name + ' ' + block(fields);
+  },
+
+  TypeExtensionDefinition: function TypeExtensionDefinition(_ref29) {
+    var definition = _ref29.definition;
+    return 'extend ' + definition;
   }
 };
 
-exports.printDocASTReducer = printDocASTReducer;
 /**
  * Given maybeArray, print an empty string if it is null or empty, otherwise
  * print all items together separated by separator if provided
  */
-
 function join(maybeArray, separator) {
   return maybeArray ? maybeArray.filter(function (x) {
     return x;
@@ -18589,9 +18634,8 @@ function join(maybeArray, separator) {
 
 /**
  * Given maybeArray, print an empty string if it is null or empty, otherwise
- * print each item on it's own line, wrapped in an indented "{ }" block.
+ * print each item on its own line, wrapped in an indented "{ }" block.
  */
-
 function block(maybeArray) {
   return length(maybeArray) ? indent('{\n' + join(maybeArray, '\n')) + '\n}' : '';
 }
@@ -18600,7 +18644,6 @@ function block(maybeArray) {
  * If maybeString is not null or empty, then wrap with start and end, otherwise
  * print an empty string.
  */
-
 function wrap(start, maybeString, end) {
   return maybeString ? start + maybeString + (end || '') : '';
 }
@@ -18612,60 +18655,7 @@ function indent(maybeString) {
 function length(maybeArray) {
   return maybeArray ? maybeArray.length : 0;
 }
-},{"./visitor":143}],140:[function(require,module,exports){
-
-/**
- *  Copyright (c) 2015, Facebook, Inc.
- *  All rights reserved.
- *
- *  This source code is licensed under the BSD-style license found in the
- *  LICENSE file in the root directory of this source tree. An additional grant
- *  of patent rights can be found in the PATENTS file in the same directory.
- */
-
-'use strict';
-
-Object.defineProperty(exports, '__esModule', {
-  value: true
-});
-},{}],141:[function(require,module,exports){
-/**
- *  Copyright (c) 2015, Facebook, Inc.
- *  All rights reserved.
- *
- *  This source code is licensed under the BSD-style license found in the
- *  LICENSE file in the root directory of this source tree. An additional grant
- *  of patent rights can be found in the PATENTS file in the same directory.
- */
-
-// Schema
-
-'use strict';
-
-Object.defineProperty(exports, '__esModule', {
-  value: true
-});
-var SCHEMA_DOCUMENT = 'SchemaDocument';
-exports.SCHEMA_DOCUMENT = SCHEMA_DOCUMENT;
-var TYPE_DEFINITION = 'TypeDefinition';
-exports.TYPE_DEFINITION = TYPE_DEFINITION;
-var FIELD_DEFINITION = 'FieldDefinition';
-exports.FIELD_DEFINITION = FIELD_DEFINITION;
-var INPUT_VALUE_DEFINITION = 'InputValueDefinition';
-exports.INPUT_VALUE_DEFINITION = INPUT_VALUE_DEFINITION;
-var INTERFACE_DEFINITION = 'InterfaceDefinition';
-exports.INTERFACE_DEFINITION = INTERFACE_DEFINITION;
-var UNION_DEFINITION = 'UnionDefinition';
-exports.UNION_DEFINITION = UNION_DEFINITION;
-var SCALAR_DEFINITION = 'ScalarDefinition';
-exports.SCALAR_DEFINITION = SCALAR_DEFINITION;
-var ENUM_DEFINITION = 'EnumDefinition';
-exports.ENUM_DEFINITION = ENUM_DEFINITION;
-var ENUM_VALUE_DEFINITION = 'EnumValueDefinition';
-exports.ENUM_VALUE_DEFINITION = ENUM_VALUE_DEFINITION;
-var INPUT_OBJECT_DEFINITION = 'InputObjectDefinition';
-exports.INPUT_OBJECT_DEFINITION = INPUT_OBJECT_DEFINITION;
-},{}],142:[function(require,module,exports){
+},{"./visitor":135}],134:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -18698,7 +18688,7 @@ var Source = function Source(body, name) {
 };
 
 exports.Source = Source;
-},{"babel-runtime/helpers/class-call-check":20}],143:[function(require,module,exports){
+},{"babel-runtime/helpers/class-call-check":23}],135:[function(require,module,exports){
 /**
  *  Copyright (c) 2015, Facebook, Inc.
  *  All rights reserved.
@@ -18745,7 +18735,18 @@ var QueryDocumentKeys = {
 
   NamedType: ['name'],
   ListType: ['type'],
-  NonNullType: ['type']
+  NonNullType: ['type'],
+
+  ObjectTypeDefinition: ['name', 'interfaces', 'fields'],
+  FieldDefinition: ['name', 'arguments', 'type'],
+  InputValueDefinition: ['name', 'type', 'defaultValue'],
+  InterfaceTypeDefinition: ['name', 'fields'],
+  UnionTypeDefinition: ['name', 'types'],
+  ScalarTypeDefinition: ['name'],
+  EnumTypeDefinition: ['name', 'values'],
+  EnumValueDefinition: ['name'],
+  InputObjectTypeDefinition: ['name', 'fields'],
+  TypeExtensionDefinition: ['definition']
 };
 
 exports.QueryDocumentKeys = QueryDocumentKeys;
@@ -18755,7 +18756,7 @@ exports.BREAK = BREAK;
 /**
  * visit() will walk through an AST using a depth first traversal, calling
  * the visitor's enter function at each node in the traversal, and calling the
- * leave function after visiting that node and all of it's child nodes.
+ * leave function after visiting that node and all of its child nodes.
  *
  * By returning different values from the enter and leave functions, the
  * behavior of the visitor can be altered, including skipping over a sub-tree of
@@ -18995,7 +18996,7 @@ function getVisitFn(visitor, isLeaving, kind) {
     }
   }
 }
-},{"babel-runtime/helpers/sliced-to-array":26}],144:[function(require,module,exports){
+},{"babel-runtime/helpers/sliced-to-array":30}],136:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -19016,6 +19017,8 @@ function getVisitFn(visitor, isLeaving, kind) {
 var _createClass = require('babel-runtime/helpers/create-class')['default'];
 
 var _classCallCheck = require('babel-runtime/helpers/class-call-check')['default'];
+
+var _extends = require('babel-runtime/helpers/extends')['default'];
 
 var _Object$keys = require('babel-runtime/core-js/object/keys')['default'];
 
@@ -19142,6 +19145,7 @@ var GraphQLScalarType /* <T> */ = (function () {
     _classCallCheck(this, GraphQLScalarType);
 
     (0, _jsutilsInvariant2['default'])(config.name, 'Type must be named.');
+    assertValidName(config.name);
     this.name = config.name;
     this.description = config.description;
     (0, _jsutilsInvariant2['default'])(typeof config.serialize === 'function', this + ' must provide "serialize" function. If this custom Scalar is ' + 'also used as an input type, ensure "parseValue" and "parseLiteral" ' + 'functions are also provided.');
@@ -19225,6 +19229,7 @@ var GraphQLObjectType = (function () {
     _classCallCheck(this, GraphQLObjectType);
 
     (0, _jsutilsInvariant2['default'])(config.name, 'Type must be named.');
+    assertValidName(config.name);
     this.name = config.name;
     this.description = config.description;
     if (config.isTypeOf) {
@@ -19279,17 +19284,24 @@ function defineInterfaces(type, interfacesOrThunk) {
 function defineFieldMap(type, fields) {
   var fieldMap = resolveMaybeThunk(fields);
   (0, _jsutilsInvariant2['default'])(isPlainObj(fieldMap), type + ' fields must be an object with field names as keys or a ' + 'function which returns such an object.');
+
   var fieldNames = _Object$keys(fieldMap);
   (0, _jsutilsInvariant2['default'])(fieldNames.length > 0, type + ' fields must be an object with field names as keys or a ' + 'function which returns such an object.');
+
+  var resultFieldMap = {};
   fieldNames.forEach(function (fieldName) {
-    var field = fieldMap[fieldName];
-    field.name = fieldName;
+    assertValidName(fieldName);
+    var field = _extends({}, fieldMap[fieldName], {
+      name: fieldName
+    });
+    (0, _jsutilsInvariant2['default'])(!field.hasOwnProperty('isDeprecated'), type + '.' + fieldName + ' should provide "deprecationReason" instead ' + 'of "isDeprecated".');
     (0, _jsutilsInvariant2['default'])(isOutputType(field.type), type + '.' + fieldName + ' field type must be Output Type but ' + ('got: ' + field.type + '.'));
     if (!field.args) {
       field.args = [];
     } else {
       (0, _jsutilsInvariant2['default'])(isPlainObj(field.args), type + '.' + fieldName + ' args must be an object with argument names ' + 'as keys.');
       field.args = _Object$keys(field.args).map(function (argName) {
+        assertValidName(argName);
         var arg = field.args[argName];
         (0, _jsutilsInvariant2['default'])(isInputType(arg.type), type + '.' + fieldName + '(' + argName + ':) argument type must be ' + ('Input Type but got: ' + arg.type + '.'));
         return {
@@ -19300,8 +19312,9 @@ function defineFieldMap(type, fields) {
         };
       });
     }
+    resultFieldMap[fieldName] = field;
   });
-  return fieldMap;
+  return resultFieldMap;
 }
 
 function isPlainObj(obj) {
@@ -19344,6 +19357,7 @@ var GraphQLInterfaceType = (function () {
     _classCallCheck(this, GraphQLInterfaceType);
 
     (0, _jsutilsInvariant2['default'])(config.name, 'Type must be named.');
+    assertValidName(config.name);
     this.name = config.name;
     this.description = config.description;
     if (config.resolveType) {
@@ -19431,6 +19445,7 @@ var GraphQLUnionType = (function () {
     _classCallCheck(this, GraphQLUnionType);
 
     (0, _jsutilsInvariant2['default'])(config.name, 'Type must be named.');
+    assertValidName(config.name);
     this.name = config.name;
     this.description = config.description;
     if (config.resolveType) {
@@ -19501,7 +19516,7 @@ exports.GraphQLUnionType = GraphQLUnionType;
  *     });
  *
  * Note: If a value is not provided in a definition, the name of the enum value
- * will be used as it's internal value.
+ * will be used as its internal value.
  */
 
 var GraphQLEnumType /* <T> */ = (function () {
@@ -19509,6 +19524,7 @@ var GraphQLEnumType /* <T> */ = (function () {
     _classCallCheck(this, GraphQLEnumType);
 
     this.name = config.name;
+    assertValidName(config.name);
     this.description = config.description;
     this._values = defineEnumValues(this, config.values);
     this._enumConfig = config;
@@ -19585,8 +19601,10 @@ function defineEnumValues(type, valueMap /* <T> */
   var valueNames = _Object$keys(valueMap);
   (0, _jsutilsInvariant2['default'])(valueNames.length > 0, type + ' values must be an object with value names as keys.');
   return valueNames.map(function (valueName) {
+    assertValidName(valueName);
     var value = valueMap[valueName];
     (0, _jsutilsInvariant2['default'])(isPlainObj(value), type + '.' + valueName + ' must refer to an object with a "value" key ' + ('representing an internal value but got: ' + value + '.'));
+    (0, _jsutilsInvariant2['default'])(!value.hasOwnProperty('isDeprecated'), type + '.' + valueName + ' should provide "deprecationReason" instead ' + 'of "isDeprecated".');
     value.name = valueName;
     if ((0, _jsutilsIsNullish2['default'])(value.value)) {
       value.value = valueName;
@@ -19623,6 +19641,7 @@ var GraphQLInputObjectType = (function () {
     _classCallCheck(this, GraphQLInputObjectType);
 
     (0, _jsutilsInvariant2['default'])(config.name, 'Type must be named.');
+    assertValidName(config.name);
     this.name = config.name;
     this.description = config.description;
     this._typeConfig = config;
@@ -19642,12 +19661,16 @@ var GraphQLInputObjectType = (function () {
       (0, _jsutilsInvariant2['default'])(isPlainObj(fieldMap), this + ' fields must be an object with field names as keys or a ' + 'function which returns such an object.');
       var fieldNames = _Object$keys(fieldMap);
       (0, _jsutilsInvariant2['default'])(fieldNames.length > 0, this + ' fields must be an object with field names as keys or a ' + 'function which returns such an object.');
+      var resultFieldMap = {};
       fieldNames.forEach(function (fieldName) {
-        var field = fieldMap[fieldName];
-        field.name = fieldName;
+        assertValidName(fieldName);
+        var field = _extends({}, fieldMap[fieldName], {
+          name: fieldName
+        });
         (0, _jsutilsInvariant2['default'])(isInputType(field.type), _this2 + '.' + fieldName + ' field type must be Input Type but ' + ('got: ' + field.type + '.'));
+        resultFieldMap[fieldName] = field;
       });
-      return fieldMap;
+      return resultFieldMap;
     }
   }, {
     key: 'toString',
@@ -19702,7 +19725,7 @@ var GraphQLList = (function () {
    *     var RowType = new GraphQLObjectType({
    *       name: 'Row',
    *       fields: () => ({
-   *         id: { type: new GraphQLNonNull(String) },
+   *         id: { type: new GraphQLNonNull(GraphQLString) },
    *       })
    *     })
    *
@@ -19740,20 +19763,27 @@ var GraphQLNonNull = (function () {
 })();
 
 exports.GraphQLNonNull = GraphQLNonNull;
+
+var NAME_RX = /^[_a-zA-Z][_a-zA-Z0-9]*$/;
+
+// Helper to assert that provided names are valid.
+function assertValidName(name) {
+  (0, _jsutilsInvariant2['default'])(NAME_RX.test(name), 'Names must match /^[_a-zA-Z][_a-zA-Z0-9]*$/ but "' + name + '" does not.');
+}
 /* <T> */ /* T */ /* T */
 /**
  * Optionally provide a custom type resolver function. If one is not provided,
- * the default implemenation will call `isTypeOf` on each implementing
+ * the default implementation will call `isTypeOf` on each implementing
  * Object type.
  */
 
 /**
  * Optionally provide a custom type resolver function. If one is not provided,
- * the default implemenation will call `isTypeOf` on each implementing
+ * the default implementation will call `isTypeOf` on each implementing
  * Object type.
  */
 /* <T> */ /* <T> */ /* T */ /* T */ /* <T> */ /* <T> */ /* <T> */ /* <T> */ /* T */ /* <T> */ /* T */
-},{"../jsutils/invariant":129,"../jsutils/isNullish":130,"../jsutils/keyMap":131,"../language/kinds":134,"babel-runtime/core-js/map":12,"babel-runtime/core-js/object/create":13,"babel-runtime/core-js/object/keys":16,"babel-runtime/helpers/class-call-check":20,"babel-runtime/helpers/create-class":21,"babel-runtime/helpers/interop-require-default":24}],145:[function(require,module,exports){
+},{"../jsutils/invariant":124,"../jsutils/isNullish":125,"../jsutils/keyMap":126,"../language/kinds":129,"babel-runtime/core-js/map":15,"babel-runtime/core-js/object/create":17,"babel-runtime/core-js/object/keys":20,"babel-runtime/helpers/class-call-check":23,"babel-runtime/helpers/create-class":24,"babel-runtime/helpers/extends":25,"babel-runtime/helpers/interop-require-default":28}],137:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -19823,7 +19853,7 @@ var GraphQLSkipDirective = new GraphQLDirective({
   onField: true
 });
 exports.GraphQLSkipDirective = GraphQLSkipDirective;
-},{"./definition":144,"./scalars":148,"babel-runtime/helpers/class-call-check":20}],146:[function(require,module,exports){
+},{"./definition":136,"./scalars":140,"babel-runtime/helpers/class-call-check":23}],138:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -19989,7 +20019,7 @@ Object.defineProperty(exports, 'GraphQLID', {
 // Un-modifiers
 
 // Definitions
-},{"./definition":144,"./scalars":148,"./schema":149}],147:[function(require,module,exports){
+},{"./definition":136,"./scalars":140,"./schema":141}],139:[function(require,module,exports){
 /*  weak */
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -20024,7 +20054,7 @@ var _scalars = require('./scalars');
 
 var __Schema = new _definition.GraphQLObjectType({
   name: '__Schema',
-  description: 'A GraphQL Schema defines the capabilities of a GraphQL ' + 'server. It exposes all available types and directives on ' + 'the server, as well as the entry points for query and ' + 'mutation operations.',
+  description: 'A GraphQL Schema defines the capabilities of a GraphQL server. It ' + 'exposes all available types and directives on the server, as well as ' + 'the entry points for query, mutation, and subscription operations.',
   fields: function fields() {
     return {
       types: {
@@ -20051,6 +20081,13 @@ var __Schema = new _definition.GraphQLObjectType({
           return schema.getMutationType();
         }
       },
+      subscriptionType: {
+        description: 'If this server support subscription, the type that ' + 'subscription operations will be rooted at.',
+        type: __Type,
+        resolve: function resolve(schema) {
+          return schema.getSubscriptionType();
+        }
+      },
       directives: {
         description: 'A list of all directives supported by this server.',
         type: new _definition.GraphQLNonNull(new _definition.GraphQLList(new _definition.GraphQLNonNull(__Directive))),
@@ -20065,6 +20102,7 @@ var __Schema = new _definition.GraphQLObjectType({
 exports.__Schema = __Schema;
 var __Directive = new _definition.GraphQLObjectType({
   name: '__Directive',
+  description: 'A Directives provides a way to describe alternate runtime execution and ' + 'type validation behavior in a GraphQL document.' + '\n\nIn some cases, you need to provide options to alter GraphQL’s ' + 'execution behavior in ways field arguments will not suffice, such as ' + 'conditionally including or skipping a field. Directives provide this by ' + 'describing additional information to the executor.',
   fields: function fields() {
     return {
       name: { type: new _definition.GraphQLNonNull(_scalars.GraphQLString) },
@@ -20084,6 +20122,7 @@ var __Directive = new _definition.GraphQLObjectType({
 
 var __Type = new _definition.GraphQLObjectType({
   name: '__Type',
+  description: 'The fundamental unit of any GraphQL Schema is the type. There are ' + 'many kinds of types in GraphQL as represented by the `__TypeKind` enum.' + '\n\nDepending on the kind of a type, certain fields describe ' + 'information about that type. Scalar types provide no information ' + 'beyond a name and description, while Enum types provide their values. ' + 'Object and Interface types provide the fields they describe. Abstract ' + 'types, Union and Interface, provide the Object types possible ' + 'at runtime. List and NonNull types compose other types.',
   fields: function fields() {
     return {
       kind: {
@@ -20187,6 +20226,7 @@ var __Type = new _definition.GraphQLObjectType({
 
 var __Field = new _definition.GraphQLObjectType({
   name: '__Field',
+  description: 'Object and Interface types are described by a list of Fields, each of ' + 'which has a name, potentially a list of arguments, and a return type.',
   fields: function fields() {
     return {
       name: { type: new _definition.GraphQLNonNull(_scalars.GraphQLString) },
@@ -20213,6 +20253,7 @@ var __Field = new _definition.GraphQLObjectType({
 
 var __InputValue = new _definition.GraphQLObjectType({
   name: '__InputValue',
+  description: 'Arguments provided to Fields or Directives and the input fields of an ' + 'InputObject are represented as Input Values which describe their type ' + 'and optionally a default value.',
   fields: function fields() {
     return {
       name: { type: new _definition.GraphQLNonNull(_scalars.GraphQLString) },
@@ -20220,6 +20261,7 @@ var __InputValue = new _definition.GraphQLObjectType({
       type: { type: new _definition.GraphQLNonNull(__Type) },
       defaultValue: {
         type: _scalars.GraphQLString,
+        description: 'A GraphQL-formatted string representing the default value for this ' + 'input value.',
         resolve: function resolve(inputVal) {
           return inputVal.defaultValue == null ? null : (0, _languagePrinter.print)((0, _utilitiesAstFromValue.astFromValue)(inputVal.defaultValue, inputVal));
         }
@@ -20230,6 +20272,7 @@ var __InputValue = new _definition.GraphQLObjectType({
 
 var __EnumValue = new _definition.GraphQLObjectType({
   name: '__EnumValue',
+  description: 'One possible value for a given Enum. Enum values are unique values, not ' + 'a placeholder for a string or numeric value. However an Enum value is ' + 'returned in a JSON response as a string.',
   fields: {
     name: { type: new _definition.GraphQLNonNull(_scalars.GraphQLString) },
     description: { type: _scalars.GraphQLString },
@@ -20259,7 +20302,7 @@ var TypeKind = {
 exports.TypeKind = TypeKind;
 var __TypeKind = new _definition.GraphQLEnumType({
   name: '__TypeKind',
-  description: 'An enum describing what kind of type a given __Type is',
+  description: 'An enum describing what kind of type a given `__Type` is.',
   values: {
     SCALAR: {
       value: TypeKind.SCALAR,
@@ -20337,7 +20380,7 @@ var TypeNameMetaFieldDef = {
   }
 };
 exports.TypeNameMetaFieldDef = TypeNameMetaFieldDef;
-},{"../jsutils/isNullish":130,"../language/printer":139,"../utilities/astFromValue":151,"./definition":144,"./scalars":148,"babel-runtime/core-js/object/keys":16,"babel-runtime/helpers/interop-require-default":24}],148:[function(require,module,exports){
+},{"../jsutils/isNullish":125,"../language/printer":133,"../utilities/astFromValue":143,"./definition":136,"./scalars":140,"babel-runtime/core-js/object/keys":20,"babel-runtime/helpers/interop-require-default":28}],140:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -20374,6 +20417,7 @@ function coerceInt(value) {
 
 var GraphQLInt = new _definition.GraphQLScalarType({
   name: 'Int',
+  description: 'The `Int` scalar type represents non-fractional signed whole numeric ' + 'values. Int can represent values between -(2^53 - 1) and 2^53 - 1 since ' + 'represented in JSON as double-precision floating point numbers specified' + 'by [IEEE 754](http://en.wikipedia.org/wiki/IEEE_floating_point).',
   serialize: coerceInt,
   parseValue: coerceInt,
   parseLiteral: function parseLiteral(ast) {
@@ -20395,6 +20439,7 @@ function coerceFloat(value) {
 
 var GraphQLFloat = new _definition.GraphQLScalarType({
   name: 'Float',
+  description: 'The `Float` scalar type represents signed double-precision fractional ' + 'values as specified by ' + '[IEEE 754](http://en.wikipedia.org/wiki/IEEE_floating_point). ',
   serialize: coerceFloat,
   parseValue: coerceFloat,
   parseLiteral: function parseLiteral(ast) {
@@ -20405,6 +20450,7 @@ var GraphQLFloat = new _definition.GraphQLScalarType({
 exports.GraphQLFloat = GraphQLFloat;
 var GraphQLString = new _definition.GraphQLScalarType({
   name: 'String',
+  description: 'The `String` scalar type represents textual data, represented as UTF-8 ' + 'character sequences. The String type is most often used by GraphQL to ' + 'represent free-form human-readable text.',
   serialize: String,
   parseValue: String,
   parseLiteral: function parseLiteral(ast) {
@@ -20415,6 +20461,7 @@ var GraphQLString = new _definition.GraphQLScalarType({
 exports.GraphQLString = GraphQLString;
 var GraphQLBoolean = new _definition.GraphQLScalarType({
   name: 'Boolean',
+  description: 'The `Boolean` scalar type represents `true` or `false`.',
   serialize: Boolean,
   parseValue: Boolean,
   parseLiteral: function parseLiteral(ast) {
@@ -20425,6 +20472,7 @@ var GraphQLBoolean = new _definition.GraphQLScalarType({
 exports.GraphQLBoolean = GraphQLBoolean;
 var GraphQLID = new _definition.GraphQLScalarType({
   name: 'ID',
+  description: 'The `ID` scalar type represents a unique identifier, often used to ' + 'refetch an object or as key for a cache. The ID type appears in a JSON ' + 'response as a String; however, it is not intended to be human-readable. ' + 'When expected as an input type, any string (such as `"4"`) or integer ' + '(such as `4`) input value will be accepted as an ID.',
   serialize: String,
   parseValue: String,
   parseLiteral: function parseLiteral(ast) {
@@ -20432,7 +20480,7 @@ var GraphQLID = new _definition.GraphQLScalarType({
   }
 });
 exports.GraphQLID = GraphQLID;
-},{"../language":133,"./definition":144}],149:[function(require,module,exports){
+},{"../language":128,"./definition":136}],141:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -20496,10 +20544,11 @@ var GraphQLSchema = (function () {
     (0, _jsutilsInvariant2['default'])(typeof config === 'object', 'Must provide configuration object.');
     (0, _jsutilsInvariant2['default'])(config.query instanceof _definition.GraphQLObjectType, 'Schema query must be Object Type but got: ' + config.query + '.');
     (0, _jsutilsInvariant2['default'])(!config.mutation || config.mutation instanceof _definition.GraphQLObjectType, 'Schema mutation must be Object Type if provided but ' + ('got: ' + config.mutation + '.'));
+    (0, _jsutilsInvariant2['default'])(!config.subscription || config.subscription instanceof _definition.GraphQLObjectType, 'Schema subscription must be Object Type if provided but ' + ('got: ' + config.subscription + '.'));
     this._schemaConfig = config;
 
     // Build type map now to detect any errors within this schema.
-    this._typeMap = [this.getQueryType(), this.getMutationType(), _introspection.__Schema].reduce(typeMapReducer, {});
+    this._typeMap = [this.getQueryType(), this.getMutationType(), this.getSubscriptionType(), _introspection.__Schema].reduce(typeMapReducer, {});
 
     // Enforce correct interface implementations
     _Object$keys(this._typeMap).forEach(function (typeName) {
@@ -20521,6 +20570,11 @@ var GraphQLSchema = (function () {
     key: 'getMutationType',
     value: function getMutationType() {
       return this._schemaConfig.mutation;
+    }
+  }, {
+    key: 'getSubscriptionType',
+    value: function getSubscriptionType() {
+      return this._schemaConfig.subscription;
     }
   }, {
     key: 'getTypeMap',
@@ -20589,6 +20643,7 @@ function typeMapReducer(_x, _x2) {
       var fieldMap = type.getFields();
       _Object$keys(fieldMap).forEach(function (fieldName) {
         var field = fieldMap[fieldName];
+
         if (field.args) {
           var fieldArgTypes = field.args.map(function (arg) {
             return arg.type;
@@ -20667,7 +20722,7 @@ function isEqualType(_x3, _x4) {
     return typeA === typeB;
   }
 }
-},{"../jsutils/find":128,"../jsutils/invariant":129,"./definition":144,"./directives":145,"./introspection":147,"babel-runtime/core-js/object/keys":16,"babel-runtime/helpers/class-call-check":20,"babel-runtime/helpers/create-class":21,"babel-runtime/helpers/interop-require-default":24}],150:[function(require,module,exports){
+},{"../jsutils/find":123,"../jsutils/invariant":124,"./definition":136,"./directives":137,"./introspection":139,"babel-runtime/core-js/object/keys":20,"babel-runtime/helpers/class-call-check":23,"babel-runtime/helpers/create-class":24,"babel-runtime/helpers/interop-require-default":28}],142:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -20803,12 +20858,15 @@ var TypeInfo = (function () {
             type = schema.getQueryType();
           } else if (node.operation === 'mutation') {
             type = schema.getMutationType();
+          } else if (node.operation === 'subscription') {
+            type = schema.getSubscriptionType();
           }
           this._typeStack.push(type);
           break;
         case Kind.INLINE_FRAGMENT:
         case Kind.FRAGMENT_DEFINITION:
-          type = (0, _typeFromAST.typeFromAST)(schema, node.typeCondition);
+          var typeConditionAST = node.typeCondition;
+          type = typeConditionAST ? (0, _typeFromAST.typeFromAST)(schema, typeConditionAST) : this.getType();
           this._typeStack.push(type);
           break;
         case Kind.VARIABLE_DEFINITION:
@@ -20897,7 +20955,7 @@ function getFieldDef(schema, parentType, fieldAST) {
     return parentType.getFields()[name];
   }
 }
-},{"../jsutils/find":128,"../language/kinds":134,"../type/definition":144,"../type/introspection":147,"./typeFromAST":159,"babel-runtime/helpers/class-call-check":20,"babel-runtime/helpers/create-class":21,"babel-runtime/helpers/interop-require-default":24,"babel-runtime/helpers/interop-require-wildcard":25}],151:[function(require,module,exports){
+},{"../jsutils/find":123,"../language/kinds":129,"../type/definition":136,"../type/introspection":139,"./typeFromAST":152,"babel-runtime/helpers/class-call-check":23,"babel-runtime/helpers/create-class":24,"babel-runtime/helpers/interop-require-default":28,"babel-runtime/helpers/interop-require-wildcard":29}],143:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -21045,7 +21103,7 @@ function astFromValue(_x, _x2) {
     return { kind: _languageKinds.OBJECT, fields: fields };
   }
 }
-},{"../jsutils/invariant":129,"../jsutils/isNullish":130,"../language/kinds":134,"../type/definition":144,"../type/scalars":148,"babel-runtime/core-js/object/keys":16,"babel-runtime/helpers/interop-require-default":24}],152:[function(require,module,exports){
+},{"../jsutils/invariant":124,"../jsutils/isNullish":125,"../language/kinds":129,"../type/definition":136,"../type/scalars":140,"babel-runtime/core-js/object/keys":20,"babel-runtime/helpers/interop-require-default":28}],144:[function(require,module,exports){
 /**
  *  Copyright (c) 2015, Facebook, Inc.
  *  All rights reserved.
@@ -21079,10 +21137,6 @@ var _jsutilsKeyValMap2 = _interopRequireDefault(_jsutilsKeyValMap);
 var _valueFromAST = require('./valueFromAST');
 
 var _languageKinds = require('../language/kinds');
-
-var _languageSchemaKinds = require('../language/schema/kinds');
-
-var _languageSchemaAst = require('../language/schema/ast');
 
 var _type = require('../type');
 
@@ -21121,7 +21175,7 @@ function getInnerTypeName(_x) {
  * since they have no resolve methods.
  */
 
-function buildASTSchema(ast, queryTypeName, mutationTypeName) {
+function buildASTSchema(ast, queryTypeName, mutationTypeName, subscriptionTypeName) {
 
   if ((0, _jsutilsIsNullish2['default'])(ast)) {
     throw new Error('must pass in ast');
@@ -21130,7 +21184,19 @@ function buildASTSchema(ast, queryTypeName, mutationTypeName) {
     throw new Error('must pass in query type');
   }
 
-  var astMap = (0, _jsutilsKeyMap2['default'])(ast.definitions, function (d) {
+  var typeDefs = ast.definitions.filter(function (d) {
+    switch (d.kind) {
+      case _languageKinds.OBJECT_TYPE_DEFINITION:
+      case _languageKinds.INTERFACE_TYPE_DEFINITION:
+      case _languageKinds.ENUM_TYPE_DEFINITION:
+      case _languageKinds.UNION_TYPE_DEFINITION:
+      case _languageKinds.SCALAR_TYPE_DEFINITION:
+      case _languageKinds.INPUT_OBJECT_TYPE_DEFINITION:
+        return true;
+    }
+  });
+
+  var astMap = (0, _jsutilsKeyMap2['default'])(typeDefs, function (d) {
     return d.name.value;
   });
 
@@ -21140,6 +21206,10 @@ function buildASTSchema(ast, queryTypeName, mutationTypeName) {
 
   if (!(0, _jsutilsIsNullish2['default'])(mutationTypeName) && (0, _jsutilsIsNullish2['default'])(astMap[mutationTypeName])) {
     throw new Error('Specified mutation type ' + mutationTypeName + ' not found in document.');
+  }
+
+  if (!(0, _jsutilsIsNullish2['default'])(subscriptionTypeName) && (0, _jsutilsIsNullish2['default'])(astMap[subscriptionTypeName])) {
+    throw new Error('Specified subscription type ' + subscriptionTypeName + ' not found in document.');
   }
 
   /**
@@ -21182,34 +21252,37 @@ function buildASTSchema(ast, queryTypeName, mutationTypeName) {
   ast.definitions.forEach(produceTypeDef);
 
   var queryType = produceTypeDef(astMap[queryTypeName]);
-  var schema;
-  if ((0, _jsutilsIsNullish2['default'])(mutationTypeName)) {
-    schema = new _type.GraphQLSchema({ query: queryType });
-  } else {
-    schema = new _type.GraphQLSchema({
-      query: queryType,
-      mutation: produceTypeDef(astMap[mutationTypeName])
-    });
+
+  var schemaBody = {
+    query: queryType
+  };
+
+  if (!(0, _jsutilsIsNullish2['default'])(mutationTypeName)) {
+    schemaBody.mutation = produceTypeDef(astMap[mutationTypeName]);
   }
 
-  return schema;
+  if (!(0, _jsutilsIsNullish2['default'])(subscriptionTypeName)) {
+    schemaBody.subscription = produceTypeDef(astMap[subscriptionTypeName]);
+  }
+
+  return new _type.GraphQLSchema(schemaBody);
 
   function makeSchemaDef(def) {
     if ((0, _jsutilsIsNullish2['default'])(def)) {
       throw new Error('def must be defined');
     }
     switch (def.kind) {
-      case _languageSchemaKinds.TYPE_DEFINITION:
+      case _languageKinds.OBJECT_TYPE_DEFINITION:
         return makeTypeDef(def);
-      case _languageSchemaKinds.INTERFACE_DEFINITION:
+      case _languageKinds.INTERFACE_TYPE_DEFINITION:
         return makeInterfaceDef(def);
-      case _languageSchemaKinds.ENUM_DEFINITION:
+      case _languageKinds.ENUM_TYPE_DEFINITION:
         return makeEnumDef(def);
-      case _languageSchemaKinds.UNION_DEFINITION:
+      case _languageKinds.UNION_TYPE_DEFINITION:
         return makeUnionDef(def);
-      case _languageSchemaKinds.SCALAR_DEFINITION:
+      case _languageKinds.SCALAR_TYPE_DEFINITION:
         return makeScalarDef(def);
-      case _languageSchemaKinds.INPUT_OBJECT_DEFINITION:
+      case _languageKinds.INPUT_OBJECT_TYPE_DEFINITION:
         return makeInputObjectDef(def);
       default:
         throw new Error(def.kind + ' not supported');
@@ -21323,7 +21396,7 @@ function buildASTSchema(ast, queryTypeName, mutationTypeName) {
     });
   }
 }
-},{"../jsutils/isNullish":130,"../jsutils/keyMap":131,"../jsutils/keyValMap":132,"../language/kinds":134,"../language/schema/ast":140,"../language/schema/kinds":141,"../type":146,"./valueFromAST":160,"babel-runtime/helpers/interop-require-default":24}],153:[function(require,module,exports){
+},{"../jsutils/isNullish":125,"../jsutils/keyMap":126,"../jsutils/keyValMap":127,"../language/kinds":129,"../type":138,"./valueFromAST":153,"babel-runtime/helpers/interop-require-default":28}],145:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -21589,19 +21662,66 @@ function buildClientSchema(introspection) {
     return getNamedType(typeIntrospection.name);
   });
 
-  // Get the root Query and Mutation types.
+  // Get the root Query, Mutation, and Subscription types.
   var queryType = getType(schemaIntrospection.queryType);
   var mutationType = schemaIntrospection.mutationType ? getType(schemaIntrospection.mutationType) : null;
+  var subscriptionType = schemaIntrospection.subscriptionType ? getType(schemaIntrospection.subscriptionType) : null;
 
   // Then produce and return a Schema with these types.
   var schema = new _typeSchema.GraphQLSchema({
     query: queryType,
-    mutation: mutationType
+    mutation: mutationType,
+    subscription: subscriptionType
   });
 
   return schema;
 }
-},{"../jsutils/invariant":129,"../jsutils/keyMap":131,"../jsutils/keyValMap":132,"../language/parser":137,"../type/definition":144,"../type/introspection":147,"../type/scalars":148,"../type/schema":149,"./valueFromAST":160,"babel-runtime/helpers/interop-require-default":24}],154:[function(require,module,exports){
+},{"../jsutils/invariant":124,"../jsutils/keyMap":126,"../jsutils/keyValMap":127,"../language/parser":132,"../type/definition":136,"../type/introspection":139,"../type/scalars":140,"../type/schema":141,"./valueFromAST":153,"babel-runtime/helpers/interop-require-default":28}],146:[function(require,module,exports){
+
+/**
+ *  Copyright (c) 2015, Facebook, Inc.
+ *  All rights reserved.
+ *
+ *  This source code is licensed under the BSD-style license found in the
+ *  LICENSE file in the root directory of this source tree. An additional grant
+ *  of patent rights can be found in the PATENTS file in the same directory.
+ */
+
+/**
+ * Returns an operation AST given a document AST and optionally an operation
+ * name. If a name is not provided, an operation is only returned if only one is
+ * provided in the document.
+ */
+'use strict';
+
+Object.defineProperty(exports, '__esModule', {
+  value: true
+});
+exports.getOperationAST = getOperationAST;
+
+var _languageKinds = require('../language/kinds');
+
+function getOperationAST(documentAST, operationName) {
+  var operation = null;
+  for (var i = 0; i < documentAST.definitions.length; i++) {
+    var definition = documentAST.definitions[i];
+    if (definition.kind === _languageKinds.OPERATION_DEFINITION) {
+      if (!operationName) {
+        // If no operation name was provided, only return an Operation if there
+        // is one defined in the document. Upon encountering the second, return
+        // null.
+        if (operation) {
+          return null;
+        }
+        operation = definition;
+      } else if (definition.name && definition.name.value === operationName) {
+        return definition;
+      }
+    }
+  }
+  return operation;
+}
+},{"../language/kinds":129}],147:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -21625,6 +21745,17 @@ Object.defineProperty(exports, 'introspectionQuery', {
   enumerable: true,
   get: function get() {
     return _introspectionQuery.introspectionQuery;
+  }
+});
+
+// Gets the target Operation from a Document
+
+var _getOperationAST = require('./getOperationAST');
+
+Object.defineProperty(exports, 'getOperationAST', {
+  enumerable: true,
+  get: function get() {
+    return _getOperationAST.getOperationAST;
   }
 });
 
@@ -21733,7 +21864,7 @@ Object.defineProperty(exports, 'isValidLiteralValue', {
     return _isValidLiteralValue.isValidLiteralValue;
   }
 });
-},{"./TypeInfo":150,"./astFromValue":151,"./buildASTSchema":152,"./buildClientSchema":153,"./introspectionQuery":155,"./isValidJSValue":156,"./isValidLiteralValue":157,"./schemaPrinter":158,"./typeFromAST":159,"./valueFromAST":160}],155:[function(require,module,exports){
+},{"./TypeInfo":142,"./astFromValue":143,"./buildASTSchema":144,"./buildClientSchema":145,"./getOperationAST":146,"./introspectionQuery":148,"./isValidJSValue":149,"./isValidLiteralValue":150,"./schemaPrinter":151,"./typeFromAST":152,"./valueFromAST":153}],148:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -21749,10 +21880,10 @@ Object.defineProperty(exports, 'isValidLiteralValue', {
 Object.defineProperty(exports, '__esModule', {
   value: true
 });
-var introspectionQuery = '\n  query IntrospectionQuery {\n    __schema {\n      queryType { name }\n      mutationType { name }\n      types {\n        ...FullType\n      }\n      directives {\n        name\n        description\n        args {\n          ...InputValue\n        }\n        onOperation\n        onFragment\n        onField\n      }\n    }\n  }\n\n  fragment FullType on __Type {\n    kind\n    name\n    description\n    fields {\n      name\n      description\n      args {\n        ...InputValue\n      }\n      type {\n        ...TypeRef\n      }\n      isDeprecated\n      deprecationReason\n    }\n    inputFields {\n      ...InputValue\n    }\n    interfaces {\n      ...TypeRef\n    }\n    enumValues {\n      name\n      description\n      isDeprecated\n      deprecationReason\n    }\n    possibleTypes {\n      ...TypeRef\n    }\n  }\n\n  fragment InputValue on __InputValue {\n    name\n    description\n    type { ...TypeRef }\n    defaultValue\n  }\n\n  fragment TypeRef on __Type {\n    kind\n    name\n    ofType {\n      kind\n      name\n      ofType {\n        kind\n        name\n        ofType {\n          kind\n          name\n        }\n      }\n    }\n  }\n';
+var introspectionQuery = '\n  query IntrospectionQuery {\n    __schema {\n      queryType { name }\n      mutationType { name }\n      subscriptionType { name }\n      types {\n        ...FullType\n      }\n      directives {\n        name\n        description\n        args {\n          ...InputValue\n        }\n        onOperation\n        onFragment\n        onField\n      }\n    }\n  }\n\n  fragment FullType on __Type {\n    kind\n    name\n    description\n    fields {\n      name\n      description\n      args {\n        ...InputValue\n      }\n      type {\n        ...TypeRef\n      }\n      isDeprecated\n      deprecationReason\n    }\n    inputFields {\n      ...InputValue\n    }\n    interfaces {\n      ...TypeRef\n    }\n    enumValues {\n      name\n      description\n      isDeprecated\n      deprecationReason\n    }\n    possibleTypes {\n      ...TypeRef\n    }\n  }\n\n  fragment InputValue on __InputValue {\n    name\n    description\n    type { ...TypeRef }\n    defaultValue\n  }\n\n  fragment TypeRef on __Type {\n    kind\n    name\n    ofType {\n      kind\n      name\n      ofType {\n        kind\n        name\n        ofType {\n          kind\n          name\n        }\n      }\n    }\n  }\n';
 
 exports.introspectionQuery = introspectionQuery;
-},{}],156:[function(require,module,exports){
+},{}],149:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -21855,7 +21986,7 @@ function isValidJSValue(_x, _x2) {
     return !(0, _jsutilsIsNullish2['default'])(type.parseValue(value));
   }
 }
-},{"../jsutils/invariant":129,"../jsutils/isNullish":130,"../type/definition":144,"babel-runtime/core-js/object/keys":16,"babel-runtime/helpers/interop-require-default":24}],157:[function(require,module,exports){
+},{"../jsutils/invariant":124,"../jsutils/isNullish":125,"../type/definition":136,"babel-runtime/core-js/object/keys":20,"babel-runtime/helpers/interop-require-default":28}],150:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -21977,7 +22108,7 @@ function isValidLiteralValue(_x, _x2) {
     return !(0, _jsutilsIsNullish2['default'])(type.parseLiteral(valueAST));
   }
 }
-},{"../jsutils/invariant":129,"../jsutils/isNullish":130,"../jsutils/keyMap":131,"../language/kinds":134,"../type/definition":144,"babel-runtime/core-js/object/keys":16,"babel-runtime/helpers/interop-require-default":24}],158:[function(require,module,exports){
+},{"../jsutils/invariant":124,"../jsutils/isNullish":125,"../jsutils/keyMap":126,"../language/kinds":129,"../type/definition":136,"babel-runtime/core-js/object/keys":20,"babel-runtime/helpers/interop-require-default":28}],151:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -22121,7 +22252,7 @@ function printInputValue(arg) {
   }
   return argDecl;
 }
-},{"../jsutils/invariant":129,"../jsutils/isNullish":130,"../language/printer":139,"../type/definition":144,"../utilities/astFromValue":151,"babel-runtime/core-js/object/keys":16,"babel-runtime/helpers/interop-require-default":24}],159:[function(require,module,exports){
+},{"../jsutils/invariant":124,"../jsutils/isNullish":125,"../language/printer":133,"../type/definition":136,"../utilities/astFromValue":143,"babel-runtime/core-js/object/keys":20,"babel-runtime/helpers/interop-require-default":28}],152:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -22162,7 +22293,7 @@ function typeFromAST(schema, inputTypeAST) {
   (0, _jsutilsInvariant2['default'])(inputTypeAST.kind === _languageKinds.NAMED_TYPE, 'Must be a named type.');
   return schema.getType(inputTypeAST.name.value);
 }
-},{"../jsutils/invariant":129,"../language/kinds":134,"../type/definition":144,"babel-runtime/helpers/interop-require-default":24}],160:[function(require,module,exports){
+},{"../jsutils/invariant":124,"../language/kinds":129,"../type/definition":136,"babel-runtime/helpers/interop-require-default":28}],153:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -22296,7 +22427,7 @@ function valueFromAST(_x, _x2, _x3) {
     }
   }
 }
-},{"../jsutils/invariant":129,"../jsutils/isNullish":130,"../jsutils/keyMap":131,"../language/kinds":134,"../type/definition":144,"babel-runtime/core-js/object/keys":16,"babel-runtime/helpers/interop-require-default":24,"babel-runtime/helpers/interop-require-wildcard":25}],161:[function(require,module,exports){
+},{"../jsutils/invariant":124,"../jsutils/isNullish":125,"../jsutils/keyMap":126,"../language/kinds":129,"../type/definition":136,"babel-runtime/core-js/object/keys":20,"babel-runtime/helpers/interop-require-default":28,"babel-runtime/helpers/interop-require-wildcard":29}],154:[function(require,module,exports){
 /**
  *  Copyright (c) 2015, Facebook, Inc.
  *  All rights reserved.
@@ -22329,7 +22460,7 @@ Object.defineProperty(exports, 'specifiedRules', {
     return _specifiedRules.specifiedRules;
   }
 });
-},{"./specifiedRules":184,"./validate":185}],162:[function(require,module,exports){
+},{"./specifiedRules":178,"./validate":179}],155:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -22375,7 +22506,7 @@ function ArgumentsOfCorrectType(context) {
     }
   };
 }
-},{"../../error":121,"../../language/printer":139,"../../utilities/isValidLiteralValue":157}],163:[function(require,module,exports){
+},{"../../error":120,"../../language/printer":133,"../../utilities/isValidLiteralValue":150}],156:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -22433,7 +22564,7 @@ function DefaultValuesOfCorrectType(context) {
     }
   };
 }
-},{"../../error":121,"../../language/printer":139,"../../type/definition":144,"../../utilities/isValidLiteralValue":157}],164:[function(require,module,exports){
+},{"../../error":120,"../../language/printer":133,"../../type/definition":136,"../../utilities/isValidLiteralValue":150}],157:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -22478,7 +22609,7 @@ function FieldsOnCorrectType(context) {
     }
   };
 }
-},{"../../error":121}],165:[function(require,module,exports){
+},{"../../error":120}],158:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -22524,7 +22655,7 @@ function FragmentsOnCompositeTypes(context) {
   return {
     InlineFragment: function InlineFragment(node) {
       var type = context.getType();
-      if (type && !(0, _typeDefinition.isCompositeType)(type)) {
+      if (node.typeCondition && type && !(0, _typeDefinition.isCompositeType)(type)) {
         return new _error.GraphQLError(inlineFragmentOnNonCompositeErrorMessage((0, _languagePrinter.print)(node.typeCondition)), [node.typeCondition]);
       }
     },
@@ -22536,7 +22667,7 @@ function FragmentsOnCompositeTypes(context) {
     }
   };
 }
-},{"../../error":121,"../../language/printer":139,"../../type/definition":144}],166:[function(require,module,exports){
+},{"../../error":120,"../../language/printer":133,"../../type/definition":136}],159:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -22568,6 +22699,8 @@ var _jsutilsInvariant = require('../../jsutils/invariant');
 
 var _jsutilsInvariant2 = _interopRequireDefault(_jsutilsInvariant);
 
+var _languageKinds = require('../../language/kinds');
+
 function unknownArgMessage(argName, fieldName, type) {
   return 'Unknown argument "' + argName + '" on field "' + fieldName + '" of ' + ('type "' + type + '".');
 }
@@ -22587,7 +22720,7 @@ function KnownArgumentNames(context) {
   return {
     Argument: function Argument(node, key, parent, path, ancestors) {
       var argumentOf = ancestors[ancestors.length - 1];
-      if (argumentOf.kind === 'Field') {
+      if (argumentOf.kind === _languageKinds.FIELD) {
         var fieldDef = context.getFieldDef();
         if (fieldDef) {
           var fieldArgDef = (0, _jsutilsFind2['default'])(fieldDef.args, function (arg) {
@@ -22599,7 +22732,7 @@ function KnownArgumentNames(context) {
             return new _error.GraphQLError(unknownArgMessage(node.name.value, fieldDef.name, parentType.name), [node]);
           }
         }
-      } else if (argumentOf.kind === 'Directive') {
+      } else if (argumentOf.kind === _languageKinds.DIRECTIVE) {
         var directive = context.getDirective();
         if (directive) {
           var directiveArgDef = (0, _jsutilsFind2['default'])(directive.args, function (arg) {
@@ -22613,7 +22746,7 @@ function KnownArgumentNames(context) {
     }
   };
 }
-},{"../../error":121,"../../jsutils/find":128,"../../jsutils/invariant":129,"babel-runtime/helpers/interop-require-default":24}],167:[function(require,module,exports){
+},{"../../error":120,"../../jsutils/find":123,"../../jsutils/invariant":124,"../../language/kinds":129,"babel-runtime/helpers/interop-require-default":28}],160:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -22680,7 +22813,7 @@ function KnownDirectives(context) {
     }
   };
 }
-},{"../../error":121,"../../jsutils/find":128,"../../language/kinds":134,"babel-runtime/helpers/interop-require-default":24}],168:[function(require,module,exports){
+},{"../../error":120,"../../jsutils/find":123,"../../language/kinds":129,"babel-runtime/helpers/interop-require-default":28}],161:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -22723,7 +22856,7 @@ function KnownFragmentNames(context) {
     }
   };
 }
-},{"../../error":121}],169:[function(require,module,exports){
+},{"../../error":120}],162:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -22766,7 +22899,7 @@ function KnownTypeNames(context) {
     }
   };
 }
-},{"../../error":121}],170:[function(require,module,exports){
+},{"../../error":120}],163:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -22787,6 +22920,8 @@ exports.LoneAnonymousOperation = LoneAnonymousOperation;
 
 var _error = require('../../error');
 
+var _languageKinds = require('../../language/kinds');
+
 function anonOperationNotAloneMessage() {
   return 'This anonymous operation must be the only defined operation.';
 }
@@ -22803,7 +22938,7 @@ function LoneAnonymousOperation() {
   return {
     Document: function Document(node) {
       operationCount = node.definitions.filter(function (definition) {
-        return definition.kind === 'OperationDefinition';
+        return definition.kind === _languageKinds.OPERATION_DEFINITION;
       }).length;
     },
     OperationDefinition: function OperationDefinition(node) {
@@ -22813,7 +22948,7 @@ function LoneAnonymousOperation() {
     }
   };
 }
-},{"../../error":121}],171:[function(require,module,exports){
+},{"../../error":120,"../../language/kinds":129}],164:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -22924,7 +23059,7 @@ function gatherSpreads(node) {
   });
   return spreadNodes;
 }
-},{"../../error":121,"../../language/kinds":134,"../../language/visitor":143,"babel-runtime/core-js/set":19}],172:[function(require,module,exports){
+},{"../../error":120,"../../language/kinds":129,"../../language/visitor":135,"babel-runtime/core-js/set":22}],165:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -23001,7 +23136,7 @@ function NoUndefinedVariables() {
     }
   };
 }
-},{"../../error":121,"../../language/kinds":134}],173:[function(require,module,exports){
+},{"../../error":120,"../../language/kinds":129}],166:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -23082,7 +23217,7 @@ function NoUnusedFragments() {
     }
   };
 }
-},{"../../error":121,"babel-runtime/core-js/object/keys":16}],174:[function(require,module,exports){
+},{"../../error":120,"babel-runtime/core-js/object/keys":20}],167:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -23157,7 +23292,7 @@ function NoUnusedVariables() {
     }
   };
 }
-},{"../../error":121}],175:[function(require,module,exports){
+},{"../../error":120}],168:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -23402,7 +23537,9 @@ function collectFieldASTsAndDefs(context, parentType, selectionSet, visitedFragm
         _astAndDefs[responseName].push([selection, fieldDef]);
         break;
       case _languageKinds.INLINE_FRAGMENT:
-        _astAndDefs = collectFieldASTsAndDefs(context, (0, _utilitiesTypeFromAST.typeFromAST)(context.getSchema(), selection.typeCondition), selection.selectionSet, _visitedFragmentNames, _astAndDefs);
+        var typeCondition = selection.typeCondition;
+        var inlineFragmentType = typeCondition ? (0, _utilitiesTypeFromAST.typeFromAST)(context.getSchema(), selection.typeCondition) : parentType;
+        _astAndDefs = collectFieldASTsAndDefs(context, inlineFragmentType, selection.selectionSet, _visitedFragmentNames, _astAndDefs);
         break;
       case _languageKinds.FRAGMENT_SPREAD:
         var fragName = selection.name.value;
@@ -23458,7 +23595,7 @@ function _pairSetAdd(data, a, b) {
   }
   set.add(b);
 }
-},{"../../error":121,"../../jsutils/find":128,"../../language/kinds":134,"../../language/printer":139,"../../type/definition":144,"../../utilities/typeFromAST":159,"babel-runtime/core-js/map":12,"babel-runtime/core-js/object/keys":16,"babel-runtime/core-js/set":19,"babel-runtime/helpers/class-call-check":20,"babel-runtime/helpers/create-class":21,"babel-runtime/helpers/interop-require-default":24,"babel-runtime/helpers/sliced-to-array":26}],176:[function(require,module,exports){
+},{"../../error":120,"../../jsutils/find":123,"../../language/kinds":129,"../../language/printer":133,"../../type/definition":136,"../../utilities/typeFromAST":152,"babel-runtime/core-js/map":15,"babel-runtime/core-js/object/keys":20,"babel-runtime/core-js/set":22,"babel-runtime/helpers/class-call-check":23,"babel-runtime/helpers/create-class":24,"babel-runtime/helpers/interop-require-default":28,"babel-runtime/helpers/sliced-to-array":30}],169:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -23553,7 +23690,7 @@ function doTypesOverlap(t1, t2) {
     });
   }
 }
-},{"../../error":121,"../../jsutils/keyMap":131,"../../type/definition":144,"../../utilities/typeFromAST":159,"babel-runtime/helpers/interop-require-default":24}],177:[function(require,module,exports){
+},{"../../error":120,"../../jsutils/keyMap":126,"../../type/definition":136,"../../utilities/typeFromAST":152,"babel-runtime/helpers/interop-require-default":28}],170:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -23653,7 +23790,7 @@ function ProvidedNonNullArguments(context) {
     }
   };
 }
-},{"../../error":121,"../../jsutils/keyMap":131,"../../type/definition":144,"babel-runtime/helpers/interop-require-default":24}],178:[function(require,module,exports){
+},{"../../error":120,"../../jsutils/keyMap":126,"../../type/definition":136,"babel-runtime/helpers/interop-require-default":28}],171:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -23708,7 +23845,7 @@ function ScalarLeafs(context) {
     }
   };
 }
-},{"../../error":121,"../../type/definition":144}],179:[function(require,module,exports){
+},{"../../error":120,"../../type/definition":136}],172:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -23760,7 +23897,7 @@ function UniqueArgumentNames() {
     }
   };
 }
-},{"../../error":121,"babel-runtime/core-js/object/create":13}],180:[function(require,module,exports){
+},{"../../error":120,"babel-runtime/core-js/object/create":17}],173:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -23805,7 +23942,56 @@ function UniqueFragmentNames() {
     }
   };
 }
-},{"../../error":121,"babel-runtime/core-js/object/create":13}],181:[function(require,module,exports){
+},{"../../error":120,"babel-runtime/core-js/object/create":17}],174:[function(require,module,exports){
+
+/**
+ *  Copyright (c) 2015, Facebook, Inc.
+ *  All rights reserved.
+ *
+ *  This source code is licensed under the BSD-style license found in the
+ *  LICENSE file in the root directory of this source tree. An additional grant
+ *  of patent rights can be found in the PATENTS file in the same directory.
+ */
+
+'use strict';
+
+var _Object$create = require('babel-runtime/core-js/object/create')['default'];
+
+Object.defineProperty(exports, '__esModule', {
+  value: true
+});
+exports.duplicateInputFieldMessage = duplicateInputFieldMessage;
+exports.UniqueInputFieldNames = UniqueInputFieldNames;
+
+var _error = require('../../error');
+
+function duplicateInputFieldMessage(fieldName) {
+  return 'There can be only one input field named "' + fieldName + '".';
+}
+
+/**
+ * Unique input field names
+ *
+ * A GraphQL input object value is only valid if all supplied fields are
+ * uniquely named.
+ */
+
+function UniqueInputFieldNames() {
+  var knownNames = _Object$create(null);
+  return {
+    ObjectValue: function ObjectValue() {
+      knownNames = _Object$create(null);
+    },
+    ObjectField: function ObjectField(node) {
+      var fieldName = node.name.value;
+      if (knownNames[fieldName]) {
+        return new _error.GraphQLError(duplicateInputFieldMessage(fieldName), [knownNames[fieldName], node.name]);
+      }
+      knownNames[fieldName] = node.name;
+    }
+  };
+}
+},{"../../error":120,"babel-runtime/core-js/object/create":17}],175:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -23852,7 +24038,7 @@ function UniqueOperationNames() {
     }
   };
 }
-},{"../../error":121,"babel-runtime/core-js/object/create":13}],182:[function(require,module,exports){
+},{"../../error":120,"babel-runtime/core-js/object/create":17}],176:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -23903,7 +24089,7 @@ function VariablesAreInputTypes(context) {
     }
   };
 }
-},{"../../error":121,"../../language/printer":139,"../../type/definition":144,"../../utilities/typeFromAST":159}],183:[function(require,module,exports){
+},{"../../error":120,"../../language/printer":133,"../../type/definition":136,"../../utilities/typeFromAST":152}],177:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -24011,7 +24197,7 @@ function varTypeAllowedForType(_x, _x2) {
     return varType === expectedType;
   }
 }
-},{"../../error":121,"../../type/definition":144,"../../utilities/typeFromAST":159}],184:[function(require,module,exports){
+},{"../../error":120,"../../type/definition":136,"../../utilities/typeFromAST":152}],178:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -24115,12 +24301,16 @@ var _rulesVariablesInAllowedPosition = require('./rules/VariablesInAllowedPositi
 
 var _rulesOverlappingFieldsCanBeMerged = require('./rules/OverlappingFieldsCanBeMerged');
 
+// Spec Section: "Input Object Field Uniqueness"
+
+var _rulesUniqueInputFieldNames = require('./rules/UniqueInputFieldNames');
+
 /**
  * This set includes all validation rules defined by the GraphQL spec.
  */
-var specifiedRules = [_rulesUniqueOperationNames.UniqueOperationNames, _rulesLoneAnonymousOperation.LoneAnonymousOperation, _rulesKnownTypeNames.KnownTypeNames, _rulesFragmentsOnCompositeTypes.FragmentsOnCompositeTypes, _rulesVariablesAreInputTypes.VariablesAreInputTypes, _rulesScalarLeafs.ScalarLeafs, _rulesFieldsOnCorrectType.FieldsOnCorrectType, _rulesUniqueFragmentNames.UniqueFragmentNames, _rulesKnownFragmentNames.KnownFragmentNames, _rulesNoUnusedFragments.NoUnusedFragments, _rulesPossibleFragmentSpreads.PossibleFragmentSpreads, _rulesNoFragmentCycles.NoFragmentCycles, _rulesNoUndefinedVariables.NoUndefinedVariables, _rulesNoUnusedVariables.NoUnusedVariables, _rulesKnownDirectives.KnownDirectives, _rulesKnownArgumentNames.KnownArgumentNames, _rulesUniqueArgumentNames.UniqueArgumentNames, _rulesArgumentsOfCorrectType.ArgumentsOfCorrectType, _rulesProvidedNonNullArguments.ProvidedNonNullArguments, _rulesDefaultValuesOfCorrectType.DefaultValuesOfCorrectType, _rulesVariablesInAllowedPosition.VariablesInAllowedPosition, _rulesOverlappingFieldsCanBeMerged.OverlappingFieldsCanBeMerged];
+var specifiedRules = [_rulesUniqueOperationNames.UniqueOperationNames, _rulesLoneAnonymousOperation.LoneAnonymousOperation, _rulesKnownTypeNames.KnownTypeNames, _rulesFragmentsOnCompositeTypes.FragmentsOnCompositeTypes, _rulesVariablesAreInputTypes.VariablesAreInputTypes, _rulesScalarLeafs.ScalarLeafs, _rulesFieldsOnCorrectType.FieldsOnCorrectType, _rulesUniqueFragmentNames.UniqueFragmentNames, _rulesKnownFragmentNames.KnownFragmentNames, _rulesNoUnusedFragments.NoUnusedFragments, _rulesPossibleFragmentSpreads.PossibleFragmentSpreads, _rulesNoFragmentCycles.NoFragmentCycles, _rulesNoUndefinedVariables.NoUndefinedVariables, _rulesNoUnusedVariables.NoUnusedVariables, _rulesKnownDirectives.KnownDirectives, _rulesKnownArgumentNames.KnownArgumentNames, _rulesUniqueArgumentNames.UniqueArgumentNames, _rulesArgumentsOfCorrectType.ArgumentsOfCorrectType, _rulesProvidedNonNullArguments.ProvidedNonNullArguments, _rulesDefaultValuesOfCorrectType.DefaultValuesOfCorrectType, _rulesVariablesInAllowedPosition.VariablesInAllowedPosition, _rulesOverlappingFieldsCanBeMerged.OverlappingFieldsCanBeMerged, _rulesUniqueInputFieldNames.UniqueInputFieldNames];
 exports.specifiedRules = specifiedRules;
-},{"./rules/ArgumentsOfCorrectType":162,"./rules/DefaultValuesOfCorrectType":163,"./rules/FieldsOnCorrectType":164,"./rules/FragmentsOnCompositeTypes":165,"./rules/KnownArgumentNames":166,"./rules/KnownDirectives":167,"./rules/KnownFragmentNames":168,"./rules/KnownTypeNames":169,"./rules/LoneAnonymousOperation":170,"./rules/NoFragmentCycles":171,"./rules/NoUndefinedVariables":172,"./rules/NoUnusedFragments":173,"./rules/NoUnusedVariables":174,"./rules/OverlappingFieldsCanBeMerged":175,"./rules/PossibleFragmentSpreads":176,"./rules/ProvidedNonNullArguments":177,"./rules/ScalarLeafs":178,"./rules/UniqueArgumentNames":179,"./rules/UniqueFragmentNames":180,"./rules/UniqueOperationNames":181,"./rules/VariablesAreInputTypes":182,"./rules/VariablesInAllowedPosition":183}],185:[function(require,module,exports){
+},{"./rules/ArgumentsOfCorrectType":155,"./rules/DefaultValuesOfCorrectType":156,"./rules/FieldsOnCorrectType":157,"./rules/FragmentsOnCompositeTypes":158,"./rules/KnownArgumentNames":159,"./rules/KnownDirectives":160,"./rules/KnownFragmentNames":161,"./rules/KnownTypeNames":162,"./rules/LoneAnonymousOperation":163,"./rules/NoFragmentCycles":164,"./rules/NoUndefinedVariables":165,"./rules/NoUnusedFragments":166,"./rules/NoUnusedVariables":167,"./rules/OverlappingFieldsCanBeMerged":168,"./rules/PossibleFragmentSpreads":169,"./rules/ProvidedNonNullArguments":170,"./rules/ScalarLeafs":171,"./rules/UniqueArgumentNames":172,"./rules/UniqueFragmentNames":173,"./rules/UniqueInputFieldNames":174,"./rules/UniqueOperationNames":175,"./rules/VariablesAreInputTypes":176,"./rules/VariablesInAllowedPosition":177}],179:[function(require,module,exports){
 
 /**
  *  Copyright (c) 2015, Facebook, Inc.
@@ -24363,7 +24553,7 @@ var ValidationContext = (function () {
 })();
 
 exports.ValidationContext = ValidationContext;
-},{"../error":121,"../jsutils/invariant":129,"../language/kinds":134,"../language/visitor":143,"../type/schema":149,"../utilities/TypeInfo":150,"./specifiedRules":184,"babel-runtime/helpers/class-call-check":20,"babel-runtime/helpers/create-class":21,"babel-runtime/helpers/interop-require-default":24,"babel-runtime/helpers/interop-require-wildcard":25}],186:[function(require,module,exports){
+},{"../error":120,"../jsutils/invariant":124,"../language/kinds":129,"../language/visitor":135,"../type/schema":141,"../utilities/TypeInfo":142,"./specifiedRules":178,"babel-runtime/helpers/class-call-check":23,"babel-runtime/helpers/create-class":24,"babel-runtime/helpers/interop-require-default":28,"babel-runtime/helpers/interop-require-wildcard":29}],180:[function(require,module,exports){
 (function (global){
 /**
  * marked - a markdown parser
@@ -25652,5 +25842,5 @@ if (typeof module !== 'undefined' && typeof exports === 'object') {
 }());
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}]},{},[8])(8)
+},{}]},{},[9])(9)
 });
