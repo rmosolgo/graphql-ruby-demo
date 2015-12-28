@@ -13,6 +13,6 @@ HumanType = GraphQL::ObjectType.define do
   global_id_field :id
   field :name, !types.String, "The name of this person"
   connection :friends, CharacterInterface.connection_type, "Friends of this person"
-  field :appearsIn, types[EpisodeEnum], "Episodes this person appears in"
+  field :appearsIn, types[EpisodeEnum], "Episodes this person appears in", property: :appears_in
   field :homePlanet, types.String, "Where this person is from", property: :home_planet
 end
