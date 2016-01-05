@@ -4,6 +4,7 @@ ruby '2.2.2'
 
 gem 'graphql', '~> 0.9'
 gem 'graphql-relay', '~>0.4'
+gem 'graphiql-rails'
 
 gem 'react-rails'
 gem 'rails_12factor', group: :production
