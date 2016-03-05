@@ -1,10 +1,11 @@
 source 'https://rubygems.org'
 
-ruby '2.2.2'
+ruby '2.3.0'
 
 gem 'graphql', '~> 0.9'
 gem 'graphql-relay', '~>0.4'
 gem 'graphiql-rails'
+gem 'graphql-libgraphqlparser', github: "rmosolgo/graphql-libgraphqlparser-ruby"
 
 gem 'react-rails'
 gem 'rails_12factor', group: :production
