@@ -1,10 +1,3 @@
-GIT
-  remote: git://github.com/rmosolgo/graphql-libgraphqlparser-ruby.git
-  revision: bbd34beb7ba8a4f3e7f6aa7d779db49683947166
-  specs:
-    graphql-libgraphqlparser (0.1.4)
-      graphql (~> 0.11.0)
-
 GEM
   remote: https://rubygems.org/
   specs:
@@ -70,6 +63,8 @@ GEM
       rails
     graphql (0.11.1)
       parslet (~> 1.6)
+    graphql-libgraphqlparser (0.2.0)
+      graphql (~> 0.11.0)
     graphql-relay (0.7.1)
       graphql (~> 0.8)
     i18n (0.7.0)
@@ -167,7 +162,7 @@ DEPENDENCIES
   byebug
   graphiql-rails
   graphql (~> 0.9)
-  graphql-libgraphqlparser!
+  graphql-libgraphqlparser
   graphql-relay (~> 0.4)
   jquery-rails
   pg
