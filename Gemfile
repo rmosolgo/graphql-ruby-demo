@@ -2,10 +2,10 @@ source 'https://rubygems.org'
 
 ruby '2.3.0'
 
-gem 'graphql', '~> 0.9'
-gem 'graphql-relay', '~>0.4'
+gem 'graphql', '~> 0.12'
+gem 'graphql-relay', '~>0.8'
 gem 'graphiql-rails'
-gem 'graphql-libgraphqlparser'
+gem 'graphql-libgraphqlparser', '~> 0.2'
 
 gem 'react-rails'
 gem 'rails_12factor', group: :production
