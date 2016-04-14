@@ -63,7 +63,7 @@ GEM
       rails
     graphql (0.12.0)
       parslet (~> 1.6)
-    graphql-libgraphqlparser (0.2.3)
+    graphql-libgraphqlparser (0.3.0)
       graphql (~> 0.11)
     graphql-relay (0.8.0)
       graphql (~> 0.12)
