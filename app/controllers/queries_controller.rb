@@ -4,7 +4,7 @@ class QueriesController < ApplicationController
 
   def create
     query_string = params[:query]
-    query_variables = ensure_hash(params[:variables] || {})
+    query_variables = ensure_hash(params[:variables])
     result = StarWarsSchema.execute(query_string, variables: query_variables)
     render json: result
   end
@@ -12,7 +12,9 @@ class QueriesController < ApplicationController
   private
 
   def ensure_hash(query_variables)
-    if query_variables.is_a?(String)
+    if query_variables.blank?
+      {}
+    elsif query_variables.is_a?(String)
       JSON.parse(query_variables)
     else
       query_variables

@@ -2,8 +2,8 @@ source 'https://rubygems.org'
 
 ruby '2.3.0'
 
-gem 'graphql', '~> 0.12'
-gem 'graphql-relay', '~>0.8'
+gem 'graphql', '~>0.13'
+gem 'graphql-relay', '~>0.9'
 gem 'graphiql-rails'
 gem 'graphql-libgraphqlparser', '~> 0.2'
 
