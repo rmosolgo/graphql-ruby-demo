@@ -8,7 +8,7 @@
 DroidType = GraphQL::ObjectType.define do
   name "Droid"
   description "A robotic character in Star Wars"
-  interfaces [NodeIdentification.interface, CharacterInterface]
+  interfaces [GraphQL::Relay::Node.interface, CharacterInterface]
 
   global_id_field :id
   field :name, !types.String, "The name of this droid"

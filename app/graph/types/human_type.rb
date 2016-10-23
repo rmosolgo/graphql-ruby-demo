@@ -8,7 +8,7 @@
 HumanType = GraphQL::ObjectType.define do
   name "Human"
   description "A flesh-and-blood character in Star Wars"
-  interfaces [NodeIdentification.interface, CharacterInterface]
+  interfaces [GraphQL::Relay::Node.interface, CharacterInterface]
 
   global_id_field :id
   field :name, !types.String, "The name of this person"
