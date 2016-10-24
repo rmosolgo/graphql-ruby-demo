@@ -2,8 +2,7 @@ source 'https://rubygems.org'
 
 ruby '2.3.0'
 
-gem 'graphql', '~>0.13'
-gem 'graphql-relay', '~>0.9'
+gem 'graphql', '~>0.19'
 gem 'graphiql-rails'
 gem 'graphql-libgraphqlparser', '~> 0.2'
 
@@ -16,6 +15,7 @@ gem 'uglifier', '>= 1.3.0'
 gem 'jquery-rails'
 
 group :development, :test do
+  gem 'pry'
   gem 'better_errors'
   gem 'byebug'
   gem 'web-console', '~> 2.0'
