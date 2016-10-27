@@ -2,3 +2,8 @@
 language: ruby
 rvm:
  - 2.3.1
+before_install:
+ - sudo apt-get install bison
+ - wget https://github.com/graphql/libgraphqlparser/archive/v0.5.0.tar.gz
+ - tar -xzvf v0.5.0.tar.gz
+ - cd libgraphqlparser-0.5.0/ && sudo cmake . && sudo make && sudo make install
