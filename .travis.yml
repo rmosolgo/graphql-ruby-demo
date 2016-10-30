@@ -1,0 +1,19 @@
+---
+language: ruby
+rvm:
+ - 2.3.1
+before_install:
+ - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+ - sudo apt-get -qq update
+ - sudo apt-get install build-essential
+ - sudo apt-get -qq install g++-5
+ - sudo unlink /usr/bin/g++ && sudo ln -s /usr/bin/g++-5 /usr/bin/g++
+ - g++ --version
+ - sudo apt-get install bison
+ - wget https://github.com/graphql/libgraphqlparser/archive/v0.5.0.tar.gz
+ - tar -xzvf v0.5.0.tar.gz
+ - cd libgraphqlparser-0.5.0/ && sudo cmake . && sudo make && sudo make install
+ - psql -c 'create database travis_ci_test;' -U postgres
+script:
+ - bundle exec rake db:test:prepare
+ - bundle exec rake

@@ -1,6 +1,6 @@
 source 'https://rubygems.org'
 
-ruby '2.3.0'
+ruby '2.3.1'
 
 gem 'graphql', '~>0.19'
 gem 'graphiql-rails'
@@ -18,6 +18,10 @@ group :development, :test do
   gem 'pry'
   gem 'better_errors'
   gem 'byebug'
-  gem 'web-console', '~> 2.0'
   gem 'spring'
+  gem 'minitest'
+end
+
+group :development do
+  gem 'web-console', '~> 2.0'
 end
