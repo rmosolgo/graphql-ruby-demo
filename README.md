@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/rmosolgo/graphql-ruby-demo.svg?branch=master)](https://travis-ci.org/rmosolgo/graphql-ruby-demo)
+
 ## graphql-ruby-demo
 Shows an implementation of GraphQL via [graphql-ruby](https://github.com/rmosolgo/graphql-ruby).
 
