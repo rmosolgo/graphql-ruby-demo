@@ -28,3 +28,6 @@ end
 group :development do
   gem 'web-console', '~> 2.0'
 end
+
+gem 'rubocop', require: false
+
