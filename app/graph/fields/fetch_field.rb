@@ -1,18 +1,15 @@
-class FetchField < GraphQL::Field
-  def initialize(model:, type:)
-    self.type = type
-    @model = model
-    self.description = "Find a #{model.name} by ID"
-    self.arguments = {
-      "id" => GraphQL::Argument.define do
-        name "id"
-        type !GraphQL::INT_TYPE
-        description "Id for record"
+module Fields
+  class FetchField
+    def self.build(model:, type:)
+      return_type = type
+      GraphQL::Field.define do
+        type(return_type)
+        description("Find a #{model.name} by ID")
+        argument(:id, !types.Int, "ID for Record")
+        resolve ->(obj, args, ctx) {
+          model.find(args["id"])
+        }
       end
-    }
-  end
-
-  def resolve(object, arguments, ctx)
-    @model.find(arguments["id"])
+    end
   end
 end

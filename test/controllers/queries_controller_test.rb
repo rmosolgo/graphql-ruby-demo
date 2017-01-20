@@ -6,7 +6,7 @@ class QueriesControllerTest < ActionController::TestCase
   end
 
   test "should execute the graphql query" do
-    post :create, query: '{ __schema }', format: :json
+    post :create, params: { query: '{ __schema }' }, format: :json
 
     assert_response :success
   end
