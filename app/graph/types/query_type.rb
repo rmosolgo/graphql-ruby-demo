@@ -10,7 +10,7 @@ module Types
 
     # You can define fields on the fly:
     field :hero do
-      type -> { !CharacterInterface }
+      type !CharacterInterface
       description "The hero of the saga"
 
       argument :episode, EpisodeEnum, "If provided, return the hero of that episode"
@@ -20,8 +20,8 @@ module Types
       end
     end
 
-    field :human, HumanType, field: Fields::FetchField.new(type: HumanType, model: Human)
-    field :droid, DroidType, field: Fields::FetchField.new(type: DroidType, model: Droid)
+    field :human, HumanType, field: Fields::FetchField.build(type: HumanType, model: Human)
+    field :droid, DroidType, field: Fields::FetchField.build(type: DroidType, model: Droid)
     field :node, GraphQL::Relay::Node.field
   end
 end

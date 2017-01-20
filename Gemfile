@@ -4,11 +4,6 @@ ruby '2.3.1'
 
 gem 'graphql'
 gem 'graphiql-rails'
-
-# This is an optional gem. When included, GraphQL will use a parser written in C
-# instead of the Ruby parser shipped with graphql-ruby.
-# gem 'graphql-libgraphqlparser'
-
 gem 'react-rails'
 gem 'rails_12factor', group: :production
 gem 'rails', '~> 5.0'
