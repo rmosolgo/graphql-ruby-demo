@@ -1,0 +1,15 @@
+{
+  "devDependencies": {
+    "babel-core": "^6.22.1",
+    "babel-loader": "^6.2.10",
+    "babel-preset-latest": "^6.22.0",
+    "coffee-loader": "^0.7.2",
+    "coffee-script": "^1.12.3",
+    "glob": "^7.1.1",
+    "path-complete-extname": "^0.1.0",
+    "rails-erb-loader": "^3.2.0",
+    "webpack": "beta",
+    "webpack-dev-server": "beta",
+    "webpack-merge": "^2.6.1"
+  }
+}
