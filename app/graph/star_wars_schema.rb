@@ -2,11 +2,11 @@ StarWarsSchema = GraphQL::Schema.define do
   query Types::QueryType
 
   resolve_type ->(obj, ctx) do
-    case obj.class
+    case obj
     when Droid
-      DroidType
+      Types::DroidType
     when Human
-      HumanType
+      Types::HumanType
     else
       raise("Don't know how to get the GraphQL type of a #{obj.class.name} (#{obj.inspect})")
     end
