@@ -26,3 +26,4 @@ end
 
 gem 'rubocop', require: false
 
+gem 'webpacker', git: 'https://github.com/rails/webpacker'
