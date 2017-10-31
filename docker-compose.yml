@@ -7,7 +7,7 @@ web:
     - DATABASE_URL=postgres://graphql-ruby-demo:password@postgres/graphql-ruby-demo
   links:
     - postgres
-  command: /bin/bash -c "bin/rails db:migrate && bin/rails server -b 0.0.0.0"
+  command: /bin/bash -c "bin/rails db:migrate db:seed && bin/rails server -b 0.0.0.0"
 
 postgres:
   image: postgres:9
