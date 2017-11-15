@@ -7,7 +7,6 @@
 # }
 module Types
   class HumanType < BaseObject
-    name "Human"
     description "A flesh-and-blood character in Star Wars"
     interfaces [GraphQL::Relay::Node.interface, CharacterInterface]
 

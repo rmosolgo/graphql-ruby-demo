@@ -7,7 +7,6 @@
 # }
 module Types
   class DroidType < BaseObject
-    name "Droid"
     description "A robotic character in Star Wars"
     interfaces [GraphQL::Relay::Node.interface, CharacterInterface]
 

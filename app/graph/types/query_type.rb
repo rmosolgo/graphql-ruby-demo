@@ -5,7 +5,6 @@
 # }
 module Types
   class QueryType < BaseObject
-    name "Query"
     description "The query root for this schema"
 
     # You can define fields on the fly:
