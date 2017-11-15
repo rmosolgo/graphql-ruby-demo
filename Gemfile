@@ -26,3 +26,4 @@ end
 
 gem 'rubocop', require: false
 
+gem 'graphql_upgrader', github: 'Willianvdv/graphql_upgrader'

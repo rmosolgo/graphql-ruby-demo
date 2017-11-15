@@ -1,4 +1,11 @@
 GIT
+  remote: git://github.com/Willianvdv/graphql_upgrader.git
+  revision: 67065ecbf754c4ef3be8b6fe116084f34efda439
+  specs:
+    graphql_upgrader (0.1.0)
+      pry
+
+GIT
   remote: git://github.com/rmosolgo/graphql-ruby.git
   revision: 8efc8965973bacd9c8b15797abb36aa217b284a6
   branch: 1.8-dev
@@ -185,6 +192,7 @@ DEPENDENCIES
   byebug
   graphiql-rails
   graphql!
+  graphql_upgrader!
   jquery-rails
   minitest
   pg
