@@ -1,7 +1,7 @@
 StarWarsSchema = GraphQL::Schema.define do
   query Types::QueryType
 
-  resolve_type ->(obj, ctx) do
+  resolve_type ->(type, obj, ctx) do
     case obj
     when Droid
       Types::DroidType

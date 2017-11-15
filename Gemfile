@@ -2,7 +2,7 @@ source 'https://rubygems.org'
 
 ruby '2.3.1'
 
-gem 'graphql'
+gem 'graphql', github: 'rmosolgo/graphql-ruby', branch: '1.8-dev'
 gem 'graphiql-rails'
 gem 'react-rails'
 gem 'rails_12factor', group: :production
