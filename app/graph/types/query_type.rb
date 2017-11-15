@@ -4,7 +4,7 @@
 #   droid(id: String!): Droid
 # }
 module Types
-  QueryType = GraphQL::ObjectType.define do
+  class QueryType < BaseObject
     name "Query"
     description "The query root for this schema"
 
