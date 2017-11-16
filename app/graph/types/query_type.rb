@@ -8,8 +8,7 @@ module Types
     description "The query root for this schema"
 
     # You can define fields on the fly:
-    field :hero do
-      type !CharacterInterface
+    field :hero, CharacterInterface, null: true do
       description "The hero of the saga"
 
       argument :episode, EpisodeEnum, "If provided, return the hero of that episode"
