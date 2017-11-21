@@ -1,15 +1,9 @@
 GIT
-  remote: git://github.com/rmosolgo/graphql-ruby.git
-  revision: 8efc8965973bacd9c8b15797abb36aa217b284a6
-  branch: 1.8-dev
+  remote: git://github.com/Willianvdv/graphql-ruby.git
+  revision: fb7149dbd17118b1e1e41e78f6a668898c29418d
+  branch: 1-8-upgrader
   specs:
     graphql (1.8.0.pre1)
-
-PATH
-  remote: /Users/willian/src/graphql_upgrader
-  specs:
-    graphql_upgrader (0.1.0)
-      pry
 
 GEM
   remote: https://rubygems.org/
@@ -199,7 +193,6 @@ DEPENDENCIES
   byebug
   graphiql-rails
   graphql!
-  graphql_upgrader!
   jquery-rails
   minitest
   pg
@@ -217,4 +210,4 @@ RUBY VERSION
    ruby 2.3.1p112
 
 BUNDLED WITH
-   1.14.6
+   1.16.0

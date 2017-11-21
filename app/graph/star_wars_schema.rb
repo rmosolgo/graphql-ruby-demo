@@ -1,7 +1,7 @@
-class StarWarsSchema < GraphQL::Schema
+StarWarsSchema = GraphQL::Schema.define do
   query Types::QueryType
 
-  def self.resolve_type(type, obj, ctx)
+  resolve_type ->(obj, ctx) do
     case obj
     when Droid
       Types::DroidType
@@ -12,7 +12,7 @@ class StarWarsSchema < GraphQL::Schema
     end
   end
 
-  def self.object_from_id(id, ctx)
+  object_from_id ->(id, ctx) do
     type_name, item_id = GraphQL::Schema::UniqueWithinType.decode(id)
 
     # This `find` gives the user unrestricted access to *all* the records in your app. In
@@ -21,7 +21,7 @@ class StarWarsSchema < GraphQL::Schema
     type_name.constantize.find(item_id)
   end
 
-  def self.id_from_object(object, type_definition, ctx)
+  id_from_object -> (object, type_definition, ctx) do
     GraphQL::Schema::UniqueWithinType.encode(type_definition.name, object.id)
   end
 end

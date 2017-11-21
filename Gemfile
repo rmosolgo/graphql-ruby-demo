@@ -2,7 +2,7 @@ source 'https://rubygems.org'
 
 ruby '2.3.1'
 
-gem 'graphql', github: 'rmosolgo/graphql-ruby', branch: '1.8-dev'
+gem 'graphql', github: 'Willianvdv/graphql-ruby', branch: '1-8-upgrader'
 gem 'graphiql-rails'
 gem 'react-rails'
 gem 'rails_12factor', group: :production
@@ -25,5 +25,3 @@ group :development do
 end
 
 gem 'rubocop', require: false
-
-gem 'graphql_upgrader', path: '/Users/willian/src/graphql_upgrader'
